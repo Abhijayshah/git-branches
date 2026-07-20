@@ -32,5 +32,27 @@ body {
   color: #666;
   font-size: 0.95rem;
   line-height: 1.5;
-}   
+  margin-bottom: 1.5rem;
+}
+
+#action-btn {
+  background-color: #0066cc;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.2s, transform 0.1s;
+}
+
+#action-btn:hover {
+  background-color: #0052a3;
+}
+
+#action-btn:active {
+  transform: scale(0.97);
+}
+   
 

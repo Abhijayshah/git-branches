@@ -18,4 +18,8 @@ git merge feature
 ### Delete a merged branch  
 git branch -d feature
 
+## Push changes to remote
+git push origin main
 
+### Push a new branch to remote
+git push -u origin feature
