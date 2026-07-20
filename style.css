@@ -1,0 +1,36 @@
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f0f2f5;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  margin: 0;
+}
+
+#hello {
+  background: white;
+  padding: 2.5rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  max-width: 400px;
+  border-top: 5px solid #0066cc;
+  transition: transform 0.2s;
+}
+
+#hello:hover {
+  transform: translateY(-5px);
+}
+
+#hello h1 {
+  color: #333;
+  margin-top: 0;
+}
+
+#hello p {
+  color: #666;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}   
+
