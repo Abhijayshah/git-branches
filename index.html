@@ -1,16 +1,316 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Learn-git-branch</title>
+    <title>Git Branching Visualizer & Interactive Playground</title>
+    <meta name="description" content="Master Git branching workflows with an interactive terminal simulator, real-time commit tree visualizer, cheatsheets, and guided challenges.">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="hello">
-        <h1>Hello from the feature branch!</h1>
-        <p>This is a styled card demonstrating how git branching works.</p>
+    <div class="app-container">
+        <!-- Top Navigation Header -->
+        <header class="app-header">
+            <div class="logo-section">
+                <div class="git-icon">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="6" y1="3" x2="6" y2="15"></line>
+                        <circle cx="18" cy="6" r="3"></circle>
+                        <circle cx="6" cy="18" r="3"></circle>
+                        <path d="M18 9a9 9 0 0 1-9 9"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h1>Git Branching Playground</h1>
+                    <p class="subtitle">Interactive Visualizer & Command Simulator</p>
+                </div>
+            </div>
+
+            <!-- Tab Navigation & Theme Toggle -->
+            <div class="header-controls">
+                <nav class="nav-tabs" aria-label="Main Navigation">
+                    <button class="nav-tab active" data-tab="tab-visualizer" id="tab-btn-visualizer">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 3v4c0 2-2 4-4 4H6"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="3" r="3"/><circle cx="6" cy="6" r="3"/></svg>
+                        Visual Simulator
+                    </button>
+                    <button class="nav-tab" data-tab="tab-workflows" id="tab-btn-workflows">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+                        Workflow Guides
+                    </button>
+                    <button class="nav-tab" data-tab="tab-cheatsheet" id="tab-btn-cheatsheet">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                        Cheatsheet
+                    </button>
+                    <button class="nav-tab" data-tab="tab-challenges" id="tab-btn-challenges">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>
+                        Challenges <span class="badge-count" id="completed-count">0/4</span>
+                    </button>
+                </nav>
+
+                <button class="theme-toggle" id="theme-toggle-btn" title="Toggle Theme" aria-label="Toggle Theme">
+                    <svg class="sun-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+                    <svg class="moon-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Content Body -->
+        <main class="app-body">
+            <!-- TAB 1: VISUAL SIMULATOR -->
+            <section id="tab-visualizer" class="tab-content active">
+                <div class="visualizer-grid">
+                    <!-- Left/Top: Interactive Graph Section -->
+                    <div class="graph-panel glass-card">
+                        <div class="panel-header">
+                            <div class="panel-title">
+                                <span class="status-dot"></span>
+                                <h2>Commit Tree Graph</h2>
+                            </div>
+                            <div class="graph-controls">
+                                <div class="head-indicator">
+                                    <span class="label">HEAD:</span>
+                                    <span class="value" id="current-head-display">main</span>
+                                </div>
+                                <button class="btn btn-secondary btn-sm" id="btn-quick-commit">+ Quick Commit</button>
+                                <button class="btn btn-secondary btn-sm" id="btn-quick-branch">+ Branch</button>
+                                <button class="btn btn-danger btn-sm" id="btn-reset-repo">Reset Demo</button>
+                            </div>
+                        </div>
+
+                        <!-- Graph Canvas Container -->
+                        <div class="graph-canvas-container" id="graph-container">
+                            <svg id="git-graph-svg" class="git-graph-svg">
+                                <defs>
+                                    <marker id="arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                                        <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--stroke-color)" />
+                                    </marker>
+                                </defs>
+                                <g id="edges-layer"></g>
+                                <g id="nodes-layer"></g>
+                                <g id="branches-layer"></g>
+                            </svg>
+                            <div id="graph-tooltip" class="graph-tooltip hidden"></div>
+                        </div>
+
+                        <!-- Inspector Footer / Active Commit Details -->
+                        <div class="inspector-footer" id="inspector-panel">
+                            <div class="inspector-badge">Selected Node</div>
+                            <div class="inspector-info" id="inspector-content">
+                                Click on any commit node to inspect details, hashes, and branch pointers.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right/Bottom: Terminal Simulator Panel -->
+                    <div class="terminal-panel glass-card">
+                        <div class="panel-header terminal-header">
+                            <div class="terminal-dots">
+                                <span class="dot red"></span>
+                                <span class="dot yellow"></span>
+                                <span class="dot green"></span>
+                            </div>
+                            <div class="terminal-title">bash — git-playground</div>
+                            <button class="btn-text btn-sm" id="btn-clear-terminal">Clear</button>
+                        </div>
+
+                        <!-- Output Log -->
+                        <div class="terminal-output" id="terminal-output">
+                            <div class="log-entry system-msg">
+                                Welcome to <strong>Git Branching Simulator</strong>! Type <code class="cmd-highlight">help</code> to see available commands or click quick action buttons above.
+                            </div>
+                            <div class="log-entry hint-msg">
+                                Try typing: <code class="cmd-highlight">git checkout -b feature/login</code> then <code class="cmd-highlight">git commit -m "add login screen"</code>
+                            </div>
+                        </div>
+
+                        <!-- Interactive Terminal Input Prompt -->
+                        <form id="terminal-form" class="terminal-input-row" autocomplete="off">
+                            <span class="prompt-symbol">$</span>
+                            <input type="text" id="terminal-input" class="terminal-input" placeholder="Type a git command (e.g., git branch, git commit, git checkout...)" spellcheck="false">
+                            <button type="submit" class="btn btn-primary btn-sm">Run</button>
+                        </form>
+
+                        <!-- Quick Helper Buttons Bar -->
+                        <div class="quick-commands-bar">
+                            <span class="bar-label">Quick Actions:</span>
+                            <button class="chip-cmd" data-cmd="git branch">git branch</button>
+                            <button class="chip-cmd" data-cmd='git commit -m "Add new feature"'>git commit</button>
+                            <button class="chip-cmd" data-cmd="git checkout -b feature">git checkout -b</button>
+                            <button class="chip-cmd" data-cmd="git checkout main">git switch main</button>
+                            <button class="chip-cmd" data-cmd="git merge feature">git merge feature</button>
+                            <button class="chip-cmd" data-cmd="git log">git log</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 2: WORKFLOW GUIDES -->
+            <section id="tab-workflows" class="tab-content">
+                <div class="section-intro">
+                    <h2>Industry Git Branching Workflows</h2>
+                    <p>Learn how top engineering teams structure their branches for feature development, code reviews, and production deployments.</p>
+                </div>
+
+                <div class="workflows-grid">
+                    <!-- Workflow Card 1 -->
+                    <div class="workflow-card glass-card">
+                        <div class="workflow-header">
+                            <div class="workflow-icon icon-blue">🌿</div>
+                            <h3>Feature Branch Workflow</h3>
+                            <span class="difficulty-badge easy">Beginner</span>
+                        </div>
+                        <p class="workflow-desc">
+                            All feature development takes place in a dedicated branch instead of <code>main</code>. This keeps master clean and enables safe pull request reviews.
+                        </p>
+                        <div class="workflow-steps">
+                            <div class="step-item">
+                                <span class="step-num">1</span>
+                                <div><strong>Create Branch:</strong> <code>git checkout -b feature/auth</code></div>
+                            </div>
+                            <div class="step-item">
+                                <span class="step-num">2</span>
+                                <div><strong>Work & Commit:</strong> <code>git commit -m "Add auth"</code></div>
+                            </div>
+                            <div class="step-item">
+                                <span class="step-num">3</span>
+                                <div><strong>Merge to Main:</strong> <code>git checkout main && git merge feature/auth</code></div>
+                            </div>
+                        </div>
+                        <button class="btn btn-secondary btn-full load-workflow-btn" data-workflow="feature-branch">
+                            Load Demo in Simulator 🚀
+                        </button>
+                    </div>
+
+                    <!-- Workflow Card 2 -->
+                    <div class="workflow-card glass-card">
+                        <div class="workflow-header">
+                            <div class="workflow-icon icon-purple">🐙</div>
+                            <h3>GitHub Flow</h3>
+                            <span class="difficulty-badge medium">Intermediate</span>
+                        </div>
+                        <p class="workflow-desc">
+                            A lightweight, branch-based workflow that supports teams and projects that deploy regularly. Anything in <code>main</code> is always deployable.
+                        </p>
+                        <div class="workflow-steps">
+                            <div class="step-item">
+                                <span class="step-num">1</span>
+                                <div><strong>Branch off main:</strong> Descriptive name e.g. <code>add-search-bar</code></div>
+                            </div>
+                            <div class="step-item">
+                                <span class="step-num">2</span>
+                                <div><strong>Open Pull Request:</strong> Discuss and review code with peers</div>
+                            </div>
+                            <div class="step-item">
+                                <span class="step-num">3</span>
+                                <div><strong>Deploy & Merge:</strong> Test, deploy to production, then merge</div>
+                            </div>
+                        </div>
+                        <button class="btn btn-secondary btn-full load-workflow-btn" data-workflow="github-flow">
+                            Load Demo in Simulator 🚀
+                        </button>
+                    </div>
+
+                    <!-- Workflow Card 3 -->
+                    <div class="workflow-card glass-card">
+                        <div class="workflow-header">
+                            <div class="workflow-icon icon-orange">⚙️</div>
+                            <h3>Gitflow Workflow</h3>
+                            <span class="difficulty-badge hard">Advanced</span>
+                        </div>
+                        <p class="workflow-desc">
+                            A robust framework for managing larger projects with scheduled release cycles. Uses strict branch roles: <code>main</code>, <code>develop</code>, <code>feature/*</code>, <code>release/*</code>, and <code>hotfix/*</code>.
+                        </p>
+                        <div class="workflow-steps">
+                            <div class="step-item">
+                                <span class="step-num">1</span>
+                                <div><strong>Develop Branch:</strong> Integration branch for features</div>
+                            </div>
+                            <div class="step-item">
+                                <span class="step-num">2</span>
+                                <div><strong>Release Branch:</strong> Prepare release details & final bug fixes</div>
+                            </div>
+                            <div class="step-item">
+                                <span class="step-num">3</span>
+                                <div><strong>Hotfix Branch:</strong> Patch production <code>main</code> emergency bugs</div>
+                            </div>
+                        </div>
+                        <button class="btn btn-secondary btn-full load-workflow-btn" data-workflow="gitflow">
+                            Load Demo in Simulator 🚀
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 3: COMMAND CHEATSHEET -->
+            <section id="tab-cheatsheet" class="tab-content">
+                <div class="section-intro">
+                    <h2>Git Branching Cheatsheet & Command Reference</h2>
+                    <p>Quickly search, copy, and learn essential commands for branching, merging, switching, and inspecting repositories.</p>
+
+                    <div class="search-box">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                        <input type="text" id="cheatsheet-search" placeholder="Search commands e.g. switch, delete, merge, rebase...">
+                    </div>
+                </div>
+
+                <div class="cheatsheet-grid" id="cheatsheet-cards-container">
+                    <!-- Cards generated dynamically in app.js -->
+                </div>
+            </section>
+
+            <!-- TAB 4: CHALLENGES -->
+            <section id="tab-challenges" class="tab-content">
+                <div class="section-intro">
+                    <h2>Git Branching Interactive Challenges</h2>
+                    <p>Test your knowledge by completing tasks in the simulated terminal.</p>
+                </div>
+
+                <div class="challenges-container">
+                    <div class="challenge-card glass-card" id="challenge-card-1">
+                        <div class="challenge-status-icon" id="ch-icon-1">⭕</div>
+                        <div class="challenge-content">
+                            <h3>Challenge 1: Create & Switch Branch</h3>
+                            <p>Create a new branch named <code>feature/login</code> and switch to it using <code>git checkout -b feature/login</code> or <code>git switch -c feature/login</code>.</p>
+                        </div>
+                        <button class="btn btn-primary btn-sm btn-start-challenge" data-challenge="1">Try Challenge 1</button>
+                    </div>
+
+                    <div class="challenge-card glass-card" id="challenge-card-2">
+                        <div class="challenge-status-icon" id="ch-icon-2">⭕</div>
+                        <div class="challenge-content">
+                            <h3>Challenge 2: Make Commits on Your Branch</h3>
+                            <p>Make a new commit on your branch using <code>git commit -m "Add login UI"</code>.</p>
+                        </div>
+                        <button class="btn btn-primary btn-sm btn-start-challenge" data-challenge="2">Try Challenge 2</button>
+                    </div>
+
+                    <div class="challenge-card glass-card" id="challenge-card-3">
+                        <div class="challenge-status-icon" id="ch-icon-3">⭕</div>
+                        <div class="challenge-content">
+                            <h3>Challenge 3: Merge Back into Main</h3>
+                            <p>Switch back to <code>main</code> branch, then merge <code>feature/login</code> into <code>main</code>.</p>
+                        </div>
+                        <button class="btn btn-primary btn-sm btn-start-challenge" data-challenge="3">Try Challenge 3</button>
+                    </div>
+
+                    <div class="challenge-card glass-card" id="challenge-card-4">
+                        <div class="challenge-status-icon" id="ch-icon-4">⭕</div>
+                        <div class="challenge-content">
+                            <h3>Challenge 4: Clean Up Merged Branch</h3>
+                            <p>Delete the merged <code>feature/login</code> branch using <code>git branch -d feature/login</code>.</p>
+                        </div>
+                        <button class="btn btn-primary btn-sm btn-start-challenge" data-challenge="4">Try Challenge 4</button>
+                    </div>
+                </div>
+            </section>
+        </main>
     </div>
+
+    <!-- Script -->
+    <script src="app.js"></script>
 </body>
 </html>
-
