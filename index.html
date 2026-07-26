@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Git Branching Visualizer-------- & Interactive Playground</title>
-    <meta name="description" content="Master Git branching workflows with an interactive terminal simulator, real-time commit tree visualizer, cheatsheets, and guided challenges.">
+    <title>Git Branching Masterclass & Interactive Playground</title>
+    <meta name="description" content="Master professional Git developer workflows with an interactive commit graph, CLI terminal simulator, stash/rebase/cherry-pick support, cheatsheets, and guided tutorials.">
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -25,8 +25,8 @@
                     </svg>
                 </div>
                 <div>
-                    <h1>Git Branching Playground-----------------</h1>
-                    <p class="subtitle">Interactive Visualizer & Command Simulator</p>
+                    <h1>Git Branching Masterclass <span class="teacher-badge">🎓 Teacher Mode</span></h1>
+                    <p class="subtitle">Interactive Visualizer, CLI Simulator & Developer Workflow Guide</p>
                 </div>
             </div>
 
@@ -37,17 +37,21 @@
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 3v4c0 2-2 4-4 4H6"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="3" r="3"/><circle cx="6" cy="6" r="3"/></svg>
                         Visual Simulator
                     </button>
-                    <button class="nav-tab" data-tab="tab-workflows" id="tab-btn-workflows">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
-                        Workflow Guides
+                    <button class="nav-tab" data-tab="tab-tutorials" id="tab-btn-tutorials">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+                        Guided Lessons
                     </button>
                     <button class="nav-tab" data-tab="tab-cheatsheet" id="tab-btn-cheatsheet">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-                        Cheatsheet
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                        Developer Deck
+                    </button>
+                    <button class="nav-tab" data-tab="tab-status-monitor" id="tab-btn-status-monitor">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                        Branch Monitor
                     </button>
                     <button class="nav-tab" data-tab="tab-challenges" id="tab-btn-challenges">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>
-                        Challenges <span class="badge-count" id="completed-count">0/4</span>
+                        Challenges <span class="badge-count" id="completed-count">0/5</span>
                     </button>
                 </nav>
 
@@ -63,22 +67,38 @@
             <!-- TAB 1: VISUAL SIMULATOR -->
             <section id="tab-visualizer" class="tab-content active">
                 <div class="visualizer-grid">
-                    <!-- Left/Top: Interactive Graph Section -->
+                    <!-- Left: Interactive Commit Graph Section -->
                     <div class="graph-panel glass-card">
                         <div class="panel-header">
                             <div class="panel-title">
                                 <span class="status-dot"></span>
-                                <h2>Commit Tree Graph</h2>
+                                <h2>Interactive Commit Tree Graph</h2>
                             </div>
                             <div class="graph-controls">
                                 <div class="head-indicator">
                                     <span class="label">HEAD:</span>
                                     <span class="value" id="current-head-display">main</span>
                                 </div>
-                                <button class="btn btn-secondary btn-sm" id="btn-quick-commit">+ Quick Commit</button>
+                                <div class="stash-indicator" title="Stash Stack Count">
+                                    <span class="label">Stash:</span>
+                                    <span class="value" id="stash-count-display">0</span>
+                                </div>
+                                <button class="btn btn-secondary btn-sm" id="btn-quick-commit">+ Commit</button>
                                 <button class="btn btn-secondary btn-sm" id="btn-quick-branch">+ Branch</button>
+                                <button class="btn btn-secondary btn-sm" id="btn-quick-stash">📦 Stash</button>
                                 <button class="btn btn-danger btn-sm" id="btn-reset-repo">Reset Demo</button>
                             </div>
+                        </div>
+
+                        <!-- Interactive Toolbar for Quick Developer Actions -->
+                        <div class="quick-toolbar">
+                            <span class="toolbar-label">Developer Actions:</span>
+                            <button class="toolbar-btn" data-action="merge-dialog">🔀 Merge Branch</button>
+                            <button class="toolbar-btn" data-action="rebase-dialog">🔄 Rebase Branch</button>
+                            <button class="toolbar-btn" data-action="cherry-dialog">🍒 Cherry-Pick</button>
+                            <button class="toolbar-btn" data-action="stash-pop">📤 Stash Pop</button>
+                            <button class="toolbar-btn" data-action="push">⬆️ Push Remote</button>
+                            <button class="toolbar-btn" data-action="fetch">⬇️ Fetch Remote</button>
                         </div>
 
                         <!-- Graph Canvas Container -->
@@ -100,12 +120,12 @@
                         <div class="inspector-footer" id="inspector-panel">
                             <div class="inspector-badge">Selected Node</div>
                             <div class="inspector-info" id="inspector-content">
-                                Click on any commit node to inspect details, hashes, and branch pointers.
+                                Click on any commit node or branch badge to inspect full metadata, parent hashes, and branch pointers.
                             </div>
                         </div>
                     </div>
 
-                    <!-- Right/Bottom: Terminal Simulator Panel -->
+                    <!-- Right: Terminal Simulator Panel -->
                     <div class="terminal-panel glass-card">
                         <div class="panel-header terminal-header">
                             <div class="terminal-dots">
@@ -113,168 +133,251 @@
                                 <span class="dot yellow"></span>
                                 <span class="dot green"></span>
                             </div>
-                            <div class="terminal-title">bash — git-playground</div>
+                            <div class="terminal-title">bash — developer-git-cli</div>
                             <button class="btn-text btn-sm" id="btn-clear-terminal">Clear</button>
                         </div>
 
                         <!-- Output Log -->
                         <div class="terminal-output" id="terminal-output">
                             <div class="log-entry system-msg">
-                                Welcome to <strong>Git Branching Simulator</strong>! Type <code class="cmd-highlight">help</code> to see available commands or click quick action buttons above.
+                                🎓 <strong>Welcome to Git Developer Masterclass!</strong> Type <code class="cmd-highlight">help</code> to list commands, or use the interactive buttons above.
                             </div>
                             <div class="log-entry hint-msg">
-                                Try typing: <code class="cmd-highlight">git checkout -b feature/login</code> then <code class="cmd-highlight">git commit -m "add login screen"</code>
+                                Try: <code class="cmd-highlight">git checkout -b feature/auth</code> ➔ <code class="cmd-highlight">git commit -m "add login"</code> ➔ <code class="cmd-highlight">git stash</code> ➔ <code class="cmd-highlight">git switch main</code>
                             </div>
                         </div>
 
                         <!-- Interactive Terminal Input Prompt -->
                         <form id="terminal-form" class="terminal-input-row" autocomplete="off">
                             <span class="prompt-symbol">$</span>
-                            <input type="text" id="terminal-input" class="terminal-input" placeholder="Type a git command (e.g., git branch, git commit, git checkout...)" spellcheck="false">
+                            <input type="text" id="terminal-input" class="terminal-input" placeholder="Type git commands (e.g. git commit, git rebase, git stash, git cherry-pick...)" spellcheck="false">
                             <button type="submit" class="btn btn-primary btn-sm">Run</button>
                         </form>
 
                         <!-- Quick Helper Buttons Bar -->
                         <div class="quick-commands-bar">
-                            <span class="bar-label">Quick Actions:</span>
-                            <button class="chip-cmd" data-cmd="git branch">git branch</button>
-                            <button class="chip-cmd" data-cmd='git commit -m "Add new feature"'>git commit</button>
-                            <button class="chip-cmd" data-cmd="git checkout -b feature">git checkout -b</button>
-                            <button class="chip-cmd" data-cmd="git checkout main">git switch main</button>
-                            <button class="chip-cmd" data-cmd="git merge feature">git merge feature</button>
-                            <button class="chip-cmd" data-cmd="git log">git log</button>
+                            <span class="bar-label">Daily Commands:</span>
+                            <button class="chip-cmd" data-cmd="git status">git status</button>
+                            <button class="chip-cmd" data-cmd="git branch -a">git branch -a</button>
+                            <button class="chip-cmd" data-cmd='git commit -m "feat: new component"'>git commit</button>
+                            <button class="chip-cmd" data-cmd="git checkout -b feature/login">git checkout -b</cmd>
+                            <button class="chip-cmd" data-cmd="git stash">git stash</button>
+                            <button class="chip-cmd" data-cmd="git stash pop">git stash pop</button>
+                            <button class="chip-cmd" data-cmd="git log --oneline">git log</button>
+                            <button class="chip-cmd" data-cmd="git push origin main">git push</button>
                         </div>
                     </div>
                 </div>
             </section>
 
-            <!-- TAB 2: WORKFLOW GUIDES -->
-            <section id="tab-workflows" class="tab-content">
+            <!-- TAB 2: GUIDED LESSONS (TEACHER MODE) -->
+            <section id="tab-tutorials" class="tab-content">
                 <div class="section-intro">
-                    <h2>Industry Git Branching Workflows</h2>
-                    <p>Learn how top engineering teams structure their branches for feature development, code reviews, and production deployments.</p>
+                    <h2>🎓 Interactive Teacher Lessons</h2>
+                    <p>Learn core Git mental models step-by-step with interactive simulations and visual execution.</p>
                 </div>
 
-                <div class="workflows-grid">
-                    <!-- Workflow Card 1 -->
-                    <div class="workflow-card glass-card">
-                        <div class="workflow-header">
-                            <div class="workflow-icon icon-blue">🌿</div>
-                            <h3>Feature Branch Workflow</h3>
-                            <span class="difficulty-badge easy">Beginner</span>
+                <div class="lessons-grid">
+                    <!-- Lesson 1 -->
+                    <div class="lesson-card glass-card">
+                        <div class="lesson-header">
+                            <div class="lesson-number">01</div>
+                            <div>
+                                <h3>Feature Branch Development Cycle</h3>
+                                <span class="difficulty-badge easy">Essential</span>
+                            </div>
                         </div>
-                        <p class="workflow-desc">
-                            All feature development takes place in a dedicated branch instead of <code>main</code>. This keeps master clean and enables safe pull request reviews.
+                        <p class="lesson-desc">
+                            Learn why developers never work directly on <code>main</code> in production projects (like Dr Heal). Practice branching, making isolated commits, and merging.
                         </p>
-                        <div class="workflow-steps">
-                            <div class="step-item">
-                                <span class="step-num">1</span>
-                                <div><strong>Create Branch:</strong> <code>git checkout -b feature/auth</code></div>
-                            </div>
-                            <div class="step-item">
-                                <span class="step-num">2</span>
-                                <div><strong>Work & Commit:</strong> <code>git commit -m "Add auth"</code></div>
-                            </div>
-                            <div class="step-item">
-                                <span class="step-num">3</span>
-                                <div><strong>Merge to Main:</strong> <code>git checkout main && git merge feature/auth</code></div>
-                            </div>
+                        <div class="lesson-steps-list">
+                            <div class="l-step"><code>git checkout -b feature/patient-booking</code></div>
+                            <div class="l-step"><code>git commit -m "add slot selector"</code></div>
+                            <div class="l-step"><code>git checkout main && git merge feature/patient-booking</code></div>
                         </div>
-                        <button class="btn btn-secondary btn-full load-workflow-btn" data-workflow="feature-branch">
-                            Load Demo in Simulator 🚀
-                        </button>
+                        <button class="btn btn-primary btn-full run-lesson-btn" data-lesson="1">Simulate Lesson 1 🚀</button>
                     </div>
 
-                    <!-- Workflow Card 2 -->
-                    <div class="workflow-card glass-card">
-                        <div class="workflow-header">
-                            <div class="workflow-icon icon-purple">🐙</div>
-                            <h3>GitHub Flow</h3>
-                            <span class="difficulty-badge medium">Intermediate</span>
+                    <!-- Lesson 2 -->
+                    <div class="lesson-card glass-card">
+                        <div class="lesson-header">
+                            <div class="lesson-number">02</div>
+                            <div>
+                                <h3>Understanding 3-Way Merges & Conflicts</h3>
+                                <span class="difficulty-badge medium">Intermediate</span>
+                            </div>
                         </div>
-                        <p class="workflow-desc">
-                            A lightweight, branch-based workflow that supports teams and projects that deploy regularly. Anything in <code>main</code> is always deployable.
+                        <p class="lesson-desc">
+                            When both <code>main</code> and a feature branch have new commits after splitting, Git performs a 3-way merge. Learn how conflict markers (`<<<<<<<`, `=======`, `>>>>>>>`) work.
                         </p>
-                        <div class="workflow-steps">
-                            <div class="step-item">
-                                <span class="step-num">1</span>
-                                <div><strong>Branch off main:</strong> Descriptive name e.g. <code>add-search-bar</code></div>
-                            </div>
-                            <div class="step-item">
-                                <span class="step-num">2</span>
-                                <div><strong>Open Pull Request:</strong> Discuss and review code with peers</div>
-                            </div>
-                            <div class="step-item">
-                                <span class="step-num">3</span>
-                                <div><strong>Deploy & Merge:</strong> Test, deploy to production, then merge</div>
-                            </div>
+                        <div class="lesson-steps-list">
+                            <div class="l-step">Simulates concurrent commits on both <code>main</code> and <code>feature</code></div>
+                            <div class="l-step">Executes <code>git merge feature</code></div>
+                            <div class="l-step">Shows merge commit creation with 2 parent commits</div>
                         </div>
-                        <button class="btn btn-secondary btn-full load-workflow-btn" data-workflow="github-flow">
-                            Load Demo in Simulator 🚀
-                        </button>
+                        <button class="btn btn-primary btn-full run-lesson-btn" data-lesson="2">Simulate Lesson 2 🚀</button>
                     </div>
 
-                    <!-- Workflow Card 3 -->
-                    <div class="workflow-card glass-card">
-                        <div class="workflow-header">
-                            <div class="workflow-icon icon-orange">⚙️</div>
-                            <h3>Gitflow Workflow</h3>
-                            <span class="difficulty-badge hard">Advanced</span>
+                    <!-- Lesson 3 -->
+                    <div class="lesson-card glass-card">
+                        <div class="lesson-header">
+                            <div class="lesson-number">03</div>
+                            <div>
+                                <h3>Git Rebase: Clean & Linear Commit History</h3>
+                                <span class="difficulty-badge hard">Advanced</span>
+                            </div>
                         </div>
-                        <p class="workflow-desc">
-                            A robust framework for managing larger projects with scheduled release cycles. Uses strict branch roles: <code>main</code>, <code>develop</code>, <code>feature/*</code>, <code>release/*</code>, and <code>hotfix/*</code>.
+                        <p class="lesson-desc">
+                            Unlike <code>git merge</code> which creates a merge commit, <code>git rebase main</code> re-applies your feature commits on top of <code>main</code> for a clean linear commit graph.
                         </p>
-                        <div class="workflow-steps">
-                            <div class="step-item">
-                                <span class="step-num">1</span>
-                                <div><strong>Develop Branch:</strong> Integration branch for features</div>
-                            </div>
-                            <div class="step-item">
-                                <span class="step-num">2</span>
-                                <div><strong>Release Branch:</strong> Prepare release details & final bug fixes</div>
-                            </div>
-                            <div class="step-item">
-                                <span class="step-num">3</span>
-                                <div><strong>Hotfix Branch:</strong> Patch production <code>main</code> emergency bugs</div>
+                        <div class="lesson-steps-list">
+                            <div class="l-step"><code>git checkout feature/search</code></div>
+                            <div class="l-step"><code>git rebase main</code></div>
+                            <div class="l-step">Moves feature branch base onto current <code>main</code> HEAD</div>
+                        </div>
+                        <button class="btn btn-primary btn-full run-lesson-btn" data-lesson="3">Simulate Lesson 3 🚀</button>
+                    </div>
+
+                    <!-- Lesson 4 -->
+                    <div class="lesson-card glass-card">
+                        <div class="lesson-header">
+                            <div class="lesson-number">04</div>
+                            <div>
+                                <h3>Git Stash: Saving Uncommitted Work</h3>
+                                <span class="difficulty-badge easy">Essential</span>
                             </div>
                         </div>
-                        <button class="btn btn-secondary btn-full load-workflow-btn" data-workflow="gitflow">
-                            Load Demo in Simulator 🚀
-                        </button>
+                        <p class="lesson-desc">
+                            Need to switch branches urgently to fix a bug without committing unfinished work? Use <code>git stash</code> to save work-in-progress, then <code>git stash pop</code> later!
+                        </p>
+                        <div class="lesson-steps-list">
+                            <div class="l-step"><code>git stash</code> (stores dirty changes in stack)</div>
+                            <div class="l-step"><code>git switch main</code> (do hotfix work)</div>
+                            <div class="l-step"><code>git switch feature && git stash pop</code></div>
+                        </div>
+                        <button class="btn btn-primary btn-full run-lesson-btn" data-lesson="4">Simulate Lesson 4 🚀</button>
+                    </div>
+
+                    <!-- Lesson 5 -->
+                    <div class="lesson-card glass-card">
+                        <div class="lesson-header">
+                            <div class="lesson-number">05</div>
+                            <div>
+                                <h3>Git Cherry-Pick: Select Specific Commits</h3>
+                                <span class="difficulty-badge hard">Advanced</span>
+                            </div>
+                        </div>
+                        <p class="lesson-desc">
+                            Want to pick just ONE specific commit from another branch without merging the entire branch? <code>git cherry-pick &lt;hash&gt;</code> copies that exact commit over!
+                        </p>
+                        <div class="lesson-steps-list">
+                            <div class="l-step">Find commit hash on feature branch (e.g. <code>c418d2e</code>)</div>
+                            <div class="l-step"><code>git switch main</code></div>
+                            <div class="l-step"><code>git cherry-pick c418d2e</code></div>
+                        </div>
+                        <button class="btn btn-primary btn-full run-lesson-btn" data-lesson="5">Simulate Lesson 5 🚀</button>
+                    </div>
+
+                    <!-- Lesson 6 -->
+                    <div class="lesson-card glass-card">
+                        <div class="lesson-header">
+                            <div class="lesson-number">06</div>
+                            <div>
+                                <h3>Undoing Mistakes: Reset vs Revert</h3>
+                                <span class="difficulty-badge medium">Intermediate</span>
+                            </div>
+                        </div>
+                        <p class="lesson-desc">
+                            Learn the difference between <code>git reset</code> (rewinds history locally) and <code>git revert</code> (creates a new inverse commit safely for shared remote branches).
+                        </p>
+                        <div class="lesson-steps-list">
+                            <div class="l-step"><code>git reset --hard HEAD~1</code> (removes last commit)</div>
+                            <div class="l-step"><code>git revert HEAD</code> (safely undoes latest commit)</div>
+                        </div>
+                        <button class="btn btn-primary btn-full run-lesson-btn" data-lesson="6">Simulate Lesson 6 🚀</button>
                     </div>
                 </div>
             </section>
 
-            <!-- TAB 3: COMMAND CHEATSHEET -->
+            <!-- TAB 3: DEVELOPER COMMAND DECK & CHEATSHEET -->
             <section id="tab-cheatsheet" class="tab-content">
                 <div class="section-intro">
-                    <h2>Git Branching Cheatsheet & Command Reference</h2>
-                    <p>Quickly search, copy, and learn essential commands for branching, merging, switching, and inspecting repositories.</p>
+                    <h2>💻 Daily Developer Git Command Deck</h2>
+                    <p>Comprehensive reference of all daily Git commands used by professional engineering teams, categorized by workflow stages.</p>
 
-                    <div class="search-box">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                        <input type="text" id="cheatsheet-search" placeholder="Search commands e.g. switch, delete, merge, rebase...">
+                    <div class="deck-filter-bar">
+                        <div class="search-box">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                            <input type="text" id="deck-search" placeholder="Search commands e.g. rebase, stash, cherry-pick, reset, push...">
+                        </div>
+                        <div class="category-tags" id="category-filter-tags">
+                            <button class="cat-tag active" data-cat="all">All Commands</button>
+                            <button class="cat-tag" data-cat="staging">Staging & Status</button>
+                            <button class="cat-tag" data-cat="branching">Branching & Switching</button>
+                            <button class="cat-tag" data-cat="merging">Merging & Rebasing</button>
+                            <button class="cat-tag" data-cat="stashing">Stash & Cherry-Pick</button>
+                            <button class="cat-tag" data-cat="remote">Remote & Sync</button>
+                            <button class="cat-tag" data-cat="undoing">Undoing & History</button>
+                        </div>
                     </div>
                 </div>
 
                 <div class="cheatsheet-grid" id="cheatsheet-cards-container">
-                    <!-- Cards generated dynamically in app.js -->
+                    <!-- Cards dynamically rendered in app.js -->
                 </div>
             </section>
 
-            <!-- TAB 4: CHALLENGES -->
+            <!-- TAB 4: BRANCH STATUS MONITOR -->
+            <section id="tab-status-monitor" class="tab-content">
+                <div class="section-intro">
+                    <h2>🖥️ Live Branch Status Monitor</h2>
+                    <p>Real-time telemetry of your local branches, tracking remotes, commit counts, and working tree state.</p>
+                </div>
+
+                <div class="monitor-container glass-card">
+                    <div class="monitor-header">
+                        <div class="monitor-headline">
+                            <span class="pulse-dot"></span>
+                            <h3>Repository Telemetry Dashboard</h3>
+                        </div>
+                        <div class="monitor-summary" id="monitor-summary-text">
+                            Active Branch: <strong id="mon-active-branch">main</strong> | Total Branches: <strong id="mon-total-branches">2</strong>
+                        </div>
+                    </div>
+
+                    <div class="monitor-table-wrapper">
+                        <table class="monitor-table">
+                            <thead>
+                                <tr>
+                                    <th>Branch Name</th>
+                                    <th>Latest Commit</th>
+                                    <th>HEAD Pointer</th>
+                                    <th>Status vs main</th>
+                                    <th>Remote Tracking</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="monitor-table-body">
+                                <!-- Rendered dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 5: CHALLENGES -->
             <section id="tab-challenges" class="tab-content">
                 <div class="section-intro">
-                    <h2>Git Branching Interactive Challenges</h2>
-                    <p>Test your knowledge by completing tasks in the simulated terminal.</p>
+                    <h2>🎯 Interactive Developer Challenges</h2>
+                    <p>Test your real-world Git proficiency across 5 developer scenarios.</p>
                 </div>
 
                 <div class="challenges-container">
                     <div class="challenge-card glass-card" id="challenge-card-1">
                         <div class="challenge-status-icon" id="ch-icon-1">⭕</div>
                         <div class="challenge-content">
-                            <h3>Challenge 1: Create & Switch Branch</h3>
-                            <p>Create a new branch named <code>feature/login</code> and switch to it using <code>git checkout -b feature/login</code> or <code>git switch -c feature/login</code>.</p>
+                            <h3>Challenge 1: Feature Branch Creation</h3>
+                            <p>Create a feature branch named <code>feature/login</code> and switch to it using <code>git checkout -b feature/login</code>.</p>
                         </div>
                         <button class="btn btn-primary btn-sm btn-start-challenge" data-challenge="1">Try Challenge 1</button>
                     </div>
@@ -282,8 +385,8 @@
                     <div class="challenge-card glass-card" id="challenge-card-2">
                         <div class="challenge-status-icon" id="ch-icon-2">⭕</div>
                         <div class="challenge-content">
-                            <h3>Challenge 2: Make Commits on Your Branch</h3>
-                            <p>Make a new commit on your branch using <code>git commit -m "Add login UI"</code>.</p>
+                            <h3>Challenge 2: Make Commits</h3>
+                            <p>Make a commit on your feature branch using <code>git commit -m "Add auth component"</code>.</p>
                         </div>
                         <button class="btn btn-primary btn-sm btn-start-challenge" data-challenge="2">Try Challenge 2</button>
                     </div>
@@ -291,8 +394,8 @@
                     <div class="challenge-card glass-card" id="challenge-card-3">
                         <div class="challenge-status-icon" id="ch-icon-3">⭕</div>
                         <div class="challenge-content">
-                            <h3>Challenge 3: Merge Back into Main</h3>
-                            <p>Switch back to <code>main</code> branch, then merge <code>feature/login</code> into <code>main</code>.</p>
+                            <h3>Challenge 3: Work Stashing</h3>
+                            <p>Save uncommitted changes into the stash stack using <code>git stash</code>.</p>
                         </div>
                         <button class="btn btn-primary btn-sm btn-start-challenge" data-challenge="3">Try Challenge 3</button>
                     </div>
@@ -300,10 +403,19 @@
                     <div class="challenge-card glass-card" id="challenge-card-4">
                         <div class="challenge-status-icon" id="ch-icon-4">⭕</div>
                         <div class="challenge-content">
-                            <h3>Challenge 4: Clean Up Merged Branch</h3>
-                            <p>Delete the merged <code>feature/login</code> branch using <code>git branch -d feature/login</code>.</p>
+                            <h3>Challenge 4: Merge Branch</h3>
+                            <p>Switch back to <code>main</code> and merge <code>feature/login</code> using <code>git checkout main && git merge feature/login</code>.</p>
                         </div>
                         <button class="btn btn-primary btn-sm btn-start-challenge" data-challenge="4">Try Challenge 4</button>
+                    </div>
+
+                    <div class="challenge-card glass-card" id="challenge-card-5">
+                        <div class="challenge-status-icon" id="ch-icon-5">⭕</div>
+                        <div class="challenge-content">
+                            <h3>Challenge 5: Clean Up Branch</h3>
+                            <p>Delete the merged branch using <code>git branch -d feature/login</code>.</p>
+                        </div>
+                        <button class="btn btn-primary btn-sm btn-start-challenge" data-challenge="5">Try Challenge 5</button>
                     </div>
                 </div>
             </section>
