@@ -1,58 +1,43 @@
 /**
- * Git Branching Masterclass & Interactive Engine
- * Advanced state simulator, CLI parser, SVG graph engine, guided lessons, and telemetry monitor.
+ * Git Branching Visualizer & Interactive Playground
+ * Engine for state management, terminal simulation, SVG tree graph rendering, and educational challenges.
  */
 
 document.addEventListener('DOMContentLoaded', () => {
     // =========================================================================
-    // 1. Core State Engine
+    // 1. Initial State & Data Definitions
     // =========================================================================
     
     let state = {
-        commits: {},       // hash -> { id, hash, shortHash, message, parents: [], lane: 0 }
+        commits: {},       // hash -> { hash, shortHash, message, parents: [], lane: 0, x: 0, y: 0 }
         branches: {},      // branchName -> commitHash
-        remotes: {},       // 'origin/branchName' -> commitHash
         head: { type: 'branch', target: 'main' }, // type: 'branch' | 'commit'
-        stashStack: [],    // [ { id, message, commitHash } ]
         activeCommitHash: null,
         commitCounter: 1,
         activeTab: 'tab-visualizer',
         completedChallenges: new Set()
     };
 
-    // Initialize Default Repository Graph (Reflecting actual real-world multi-branch state)
+    // Preset Default State
     function resetToDefaultRepoState() {
         state.commits = {};
         state.branches = {};
-        state.remotes = {};
-        state.stashStack = [];
         state.head = { type: 'branch', target: 'main' };
         state.commitCounter = 1;
 
         const c1 = createCommitObject("Initial commit", []);
         const c2 = createCommitObject("Add index.html & style.css", [c1.hash]);
-        const c3 = createCommitObject("Merge conflict v1.0.1", [c2.hash]);
+        const c3 = createCommitObject("Update readme with branch instructions", [c2.hash]);
 
-        // main branch path
-        const c4_main = createCommitObject("Update readme and docs", [c3.hash]);
-        const c5_main = createCommitObject("Production v1.0.2 release", [c4_main.hash]);
-        state.branches['main'] = c5_main.hash;
-        state.remotes['origin/main'] = c5_main.hash;
-
-        // feature1 branch path
-        const c4_f1 = createCommitObject("Add feature1 branch.md notes", [c3.hash]);
-        const c5_f1 = createCommitObject("Add command table to branch.md", [c4_f1.hash]);
-        state.branches['feature1'] = c5_f1.hash;
-        state.remotes['origin/feature1'] = c5_f1.hash;
-
-        // feature2 branch path
-        const c4_f2 = createCommitObject("Feature2 updated with branch2", [c3.hash]);
-        state.branches['feature2'] = c4_f2.hash;
-        state.remotes['origin/feature2'] = c4_f2.hash;
-
-        // Active HEAD set to main
+        state.branches['main'] = c3.hash;
+        
+        // Add demo feature branch
+        const c4 = createCommitObject("Hello from feature branch!", [c3.hash]);
+        state.branches['feature'] = c4.hash;
+        
+        // Set HEAD back to main
         state.head = { type: 'branch', target: 'main' };
-        state.activeCommitHash = c5_main.hash;
+        state.activeCommitHash = c3.hash;
 
         renderAll();
     }
@@ -77,14 +62,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return Array.from({ length: 40 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
     }
 
-    function getHeadCommitHash() {
-        if (state.head.type === 'branch') {
-            return state.branches[state.head.target];
-        } else {
-            return state.head.target;
-        }
-    }
-
     // =========================================================================
     // 2. Tab Navigation & Theme Toggle
     // =========================================================================
@@ -104,12 +81,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (targetTab === 'tab-visualizer') {
                 setTimeout(renderGraph, 50);
-            } else if (targetTab === 'tab-status-monitor') {
-                renderStatusMonitor();
             }
         });
     });
 
+    // Theme Toggle
     const themeBtn = document.getElementById('theme-toggle-btn');
     themeBtn.addEventListener('click', () => {
         const html = document.documentElement;
@@ -119,7 +95,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // =========================================================================
-    // 3. Interactive CLI Terminal Simulator
+    // 3. Git Command Parser & Terminal Simulator
     // =========================================================================
     
     const terminalOutput = document.getElementById('terminal-output');
@@ -142,6 +118,7 @@ document.addEventListener('DOMContentLoaded', () => {
         terminalOutput.innerHTML = '';
     });
 
+    // Quick Command Buttons
     document.querySelectorAll('.chip-cmd').forEach(btn => {
         btn.addEventListener('click', () => {
             const cmd = btn.getAttribute('data-cmd');
@@ -158,6 +135,14 @@ document.addEventListener('DOMContentLoaded', () => {
         terminalOutput.scrollTop = terminalOutput.scrollHeight;
     }
 
+    function getHeadCommitHash() {
+        if (state.head.type === 'branch') {
+            return state.branches[state.head.target];
+        } else {
+            return state.head.target;
+        }
+    }
+
     function executeGitCommand(rawCmd) {
         const parts = rawCmd.split(/\s+/);
         const mainCmd = parts[0];
@@ -168,32 +153,29 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (mainCmd === 'help') {
-            appendLog(`🎓 Professional Git Developer Command Suite:`, 'system-msg');
-            appendLog(`  git status                    - Check branch & working tree state`, 'hint-msg');
-            appendLog(`  git branch [-a|-d <bname>]    - List or delete branches`, 'hint-msg');
-            appendLog(`  git checkout -b <name>        - Create and switch to new branch`, 'hint-msg');
-            appendLog(`  git switch <branch>           - Switch active branch`, 'hint-msg');
-            appendLog(`  git commit -m "msg"           - Record a new commit`, 'hint-msg');
-            appendLog(`  git merge <branch>            - 3-way merge target branch into HEAD`, 'hint-msg');
-            appendLog(`  git rebase <target>           - Rebase current branch onto target`, 'hint-msg');
-            appendLog(`  git stash / git stash pop     - Save or restore uncommitted work`, 'hint-msg');
-            appendLog(`  git cherry-pick <hash>        - Copy specific commit onto HEAD`, 'hint-msg');
-            appendLog(`  git reset --hard HEAD~1       - Rewind commit history`, 'hint-msg');
-            appendLog(`  git revert <hash>             - Safely inverse a commit`, 'hint-msg');
-            appendLog(`  git fetch / git push          - Remote repository sync`, 'hint-msg');
-            appendLog(`  git log --oneline             - View compact commit history`, 'hint-msg');
-            appendLog(`  git reset                     - Reset demo repository graph`, 'hint-msg');
+            appendLog(`Available Commands:`, 'system-msg');
+            appendLog(`  git commit -m "msg"     - Make a new commit on current HEAD`, 'hint-msg');
+            appendLog(`  git branch <name>       - Create a new branch`, 'hint-msg');
+            appendLog(`  git branch -d <name>    - Delete a branch`, 'hint-msg');
+            appendLog(`  git checkout <branch>   - Switch to branch or commit`, 'hint-msg');
+            appendLog(`  git checkout -b <name>  - Create and switch to new branch`, 'hint-msg');
+            appendLog(`  git switch -c <name>    - Create and switch to new branch`, 'hint-msg');
+            appendLog(`  git merge <branch>      - Merge target branch into current HEAD`, 'hint-msg');
+            appendLog(`  git log                 - Show commit history`, 'hint-msg');
+            appendLog(`  git status              - Show active branch & status`, 'hint-msg');
+            appendLog(`  git reset               - Reset repository graph to default demo`, 'hint-msg');
             return;
         }
 
         if (mainCmd !== 'git') {
-            appendLog(`Command '${mainCmd}' not recognized. Type 'help' for instructions.`, 'cmd-error');
+            appendLog(`Command not recognized: '${mainCmd}'. Type 'help' for instructions.`, 'cmd-error');
             return;
         }
 
         const subCmd = parts[1];
+
         if (!subCmd) {
-            appendLog(`git: missing subcommand. Try 'git status' or 'help'.`, 'cmd-error');
+            appendLog(`git: missing subcommand. Try 'git help' or 'git status'.`, 'cmd-error');
             return;
         }
 
@@ -201,13 +183,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (subCmd === 'status') {
             if (state.head.type === 'branch') {
                 appendLog(`On branch ${state.head.target}`, 'cmd-success');
-                const remoteHash = state.remotes[`origin/${state.head.target}`];
-                const localHash = state.branches[state.head.target];
-                if (remoteHash && remoteHash === localHash) {
-                    appendLog(`Your branch is up to date with 'origin/${state.head.target}'.`, 'cmd-info');
-                } else if (remoteHash) {
-                    appendLog(`Your branch and 'origin/${state.head.target}' have diverged.`, 'cmd-info');
-                }
+                appendLog(`Your branch is up to date with origin/${state.head.target}.`, 'cmd-info');
                 appendLog(`nothing to commit, working tree clean`, 'cmd-info');
             } else {
                 appendLog(`HEAD detached at ${state.head.target.substring(0, 7)}`, 'cmd-info');
@@ -217,7 +193,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // --- git commit ---
         if (subCmd === 'commit') {
-            let msg = "Developer commit #" + state.commitCounter;
+            let msg = "Commit " + state.commitCounter;
             const mIndex = parts.indexOf('-m');
             if (mIndex !== -1 && parts[mIndex + 1]) {
                 msg = parts.slice(mIndex + 1).join(' ').replace(/^["']|["']$/g, '');
@@ -242,35 +218,38 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // --- git branch ---
         if (subCmd === 'branch') {
-            if (parts.length === 2 || parts[2] === '-a' || parts[2] === '-v') {
-                appendLog(`Local & Remote Branches:`, 'system-msg');
+            if (parts.length === 2) {
+                // List branches
+                appendLog(`Branches:`, 'system-msg');
                 Object.keys(state.branches).forEach(b => {
                     const isHead = state.head.type === 'branch' && state.head.target === b;
-                    appendLog(`${isHead ? '* ' : '  '}${b} -> ${state.commits[state.branches[b]]?.shortHash || ''}`, isHead ? 'cmd-success' : 'cmd-info');
-                });
-                Object.keys(state.remotes).forEach(r => {
-                    appendLog(`  remotes/${r}`, 'cmd-info');
+                    appendLog(`${isHead ? '* ' : '  '}${b}`, isHead ? 'cmd-success' : 'cmd-info');
                 });
                 return;
             }
 
             if (parts[2] === '-d' || parts[2] === '-D') {
-                const bDelete = parts[3];
-                if (!bDelete || !state.branches[bDelete]) {
-                    appendLog(`error: branch '${bDelete}' not found.`, 'cmd-error');
+                const branchToDelete = parts[3];
+                if (!branchToDelete) {
+                    appendLog(`fatal: branch name required`, 'cmd-error');
                     return;
                 }
-                if (state.head.type === 'branch' && state.head.target === bDelete) {
-                    appendLog(`error: Cannot delete branch '${bDelete}' checked out at HEAD`, 'cmd-error');
+                if (!state.branches[branchToDelete]) {
+                    appendLog(`error: branch '${branchToDelete}' not found.`, 'cmd-error');
                     return;
                 }
-                delete state.branches[bDelete];
-                appendLog(`Deleted branch ${bDelete}.`, 'cmd-success');
+                if (state.head.type === 'branch' && state.head.target === branchToDelete) {
+                    appendLog(`error: Cannot delete branch '${branchToDelete}' checked out at HEAD`, 'cmd-error');
+                    return;
+                }
+                delete state.branches[branchToDelete];
+                appendLog(`Deleted branch ${branchToDelete}.`, 'cmd-success');
                 renderAll();
-                checkChallenges('delete-branch', { branch: bDelete });
+                checkChallenges('delete-branch', { branch: branchToDelete });
                 return;
             }
 
+            // Create new branch
             const newBranchName = parts[2];
             if (state.branches[newBranchName]) {
                 appendLog(`fatal: A branch named '${newBranchName}' already exists.`, 'cmd-error');
@@ -285,7 +264,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // --- git checkout / git switch ---
+        // --- git checkout & git switch ---
         if (subCmd === 'checkout' || subCmd === 'switch') {
             if (parts[2] === '-b' || parts[2] === '-c') {
                 const newBranchName = parts[3];
@@ -304,7 +283,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const targetName = parts[2];
             if (!targetName) {
-                appendLog(`fatal: missing branch or commit target`, 'cmd-error');
+                appendLog(`fatal: missing branch or commit argument`, 'cmd-error');
                 return;
             }
 
@@ -317,6 +296,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
+            // Check if it's a valid commit hash
             const commit = Object.values(state.commits).find(c => c.hash.startsWith(targetName) || c.shortHash === targetName);
             if (commit) {
                 state.head = { type: 'commit', target: commit.hash };
@@ -326,15 +306,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            appendLog(`error: pathspec '${targetName}' did not match any branch or commit.`, 'cmd-error');
+            appendLog(`error: pathspec '${targetName}' did not match any file(s) or branch known to git`, 'cmd-error');
             return;
         }
 
         // --- git merge ---
         if (subCmd === 'merge') {
             const branchToMerge = parts[2];
-            if (!branchToMerge || !state.branches[branchToMerge]) {
-                appendLog(`merge: branch '${branchToMerge}' not found`, 'cmd-error');
+            if (!branchToMerge) {
+                appendLog(`fatal: missing branch to merge`, 'cmd-error');
+                return;
+            }
+            if (!state.branches[branchToMerge]) {
+                appendLog(`merge: ${branchToMerge} - not something we can merge`, 'cmd-error');
                 return;
             }
 
@@ -346,6 +330,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
+            // Perform merge commit (parents = [currentHead, sourceBranchHead])
             const currentBranchName = state.head.type === 'branch' ? state.head.target : 'HEAD';
             const mergeMsg = `Merge branch '${branchToMerge}' into ${currentBranchName}`;
             const mergeCommit = createCommitObject(mergeMsg, [currentHeadHash, sourceHash]);
@@ -364,125 +349,22 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // --- git rebase ---
-        if (subCmd === 'rebase') {
-            const targetBranch = parts[2];
-            if (!targetBranch || !state.branches[targetBranch]) {
-                appendLog(`rebase: target branch '${targetBranch}' not found`, 'cmd-error');
-                return;
-            }
-
-            const targetHash = state.branches[targetBranch];
-            const currentHeadHash = getHeadCommitHash();
-
-            if (state.head.type === 'branch') {
-                // Point current branch onto target branch
-                const rebasedCommit = createCommitObject(`Rebased commit on ${targetBranch}`, [targetHash]);
-                state.branches[state.head.target] = rebasedCommit.hash;
-                state.activeCommitHash = rebasedCommit.hash;
-                appendLog(`Successfully rebased and updated refs/heads/${state.head.target}.`, 'cmd-success');
-                renderAll();
-            }
-            return;
-        }
-
-        // --- git stash ---
-        if (subCmd === 'stash') {
-            const action = parts[2];
-            if (!action || action === 'push' || action === 'save') {
-                const stashId = state.stashStack.length;
-                const headHash = getHeadCommitHash();
-                state.stashStack.push({
-                    id: stashId,
-                    message: `WIP on ${state.head.type === 'branch' ? state.head.target : 'HEAD'}: ${state.commits[headHash]?.shortHash || ''}`,
-                    commitHash: headHash
-                });
-                appendLog(`Saved working directory state stash@{${stashId}}`, 'cmd-success');
-                renderAll();
-                checkChallenges('stash', {});
-                return;
-            }
-
-            if (action === 'pop') {
-                if (state.stashStack.length === 0) {
-                    appendLog(`No stash entries found.`, 'cmd-error');
-                    return;
-                }
-                const popped = state.stashStack.pop();
-                appendLog(`Applied and dropped ${popped.message}`, 'cmd-success');
-                renderAll();
-                return;
-            }
-
-            if (action === 'list') {
-                appendLog(`Stash Stack:`, 'system-msg');
-                state.stashStack.forEach((s, idx) => {
-                    appendLog(`stash@{${idx}}: ${s.message}`, 'cmd-info');
-                });
-                return;
-            }
-        }
-
-        // --- git cherry-pick ---
-        if (subCmd === 'cherry-pick') {
-            const targetHash = parts[2];
-            if (!targetHash) {
-                appendLog(`cherry-pick: commit hash required`, 'cmd-error');
-                return;
-            }
-
-            const targetCommit = Object.values(state.commits).find(c => c.hash.startsWith(targetHash) || c.shortHash === targetHash);
-            if (!targetCommit) {
-                appendLog(`error: bad revision '${targetHash}'`, 'cmd-error');
-                return;
-            }
-
-            const currentHeadHash = getHeadCommitHash();
-            const cpCommit = createCommitObject(`[cherry-pick] ${targetCommit.message}`, [currentHeadHash]);
-            if (state.head.type === 'branch') {
-                state.branches[state.head.target] = cpCommit.hash;
-            }
-            state.activeCommitHash = cpCommit.hash;
-            appendLog(`[${state.head.type === 'branch' ? state.head.target : 'HEAD'} ${cpCommit.shortHash}] Cherry-picked commit`, 'cmd-success');
-            renderAll();
-            return;
-        }
-
-        // --- git push ---
-        if (subCmd === 'push') {
-            if (state.head.type === 'branch') {
-                const bName = state.head.target;
-                state.remotes[`origin/${bName}`] = state.branches[bName];
-                appendLog(`To https://github.com/Abhijayshah/git-branches.git`, 'cmd-success');
-                appendLog(` * [updated] ${bName} -> origin/${bName}`, 'cmd-success');
-                renderAll();
-            }
-            return;
-        }
-
-        // --- git fetch & pull ---
-        if (subCmd === 'fetch') {
-            appendLog(`From https://github.com/Abhijayshah/git-branches.git`, 'cmd-info');
-            appendLog(` * [up to date] main -> origin/main`, 'cmd-success');
-            return;
-        }
-
         // --- git log ---
         if (subCmd === 'log') {
             appendLog(`Commit History:`, 'system-msg');
             const sortedCommits = Object.values(state.commits).sort((a, b) => b.id - a.id);
             sortedCommits.forEach(c => {
                 const branchPtrs = Object.keys(state.branches).filter(b => state.branches[b] === c.hash);
-                const remotePtrs = Object.keys(state.remotes).filter(r => state.remotes[r] === c.hash);
                 const isHeadHere = getHeadCommitHash() === c.hash;
-
-                let ptrs = [];
-                if (isHeadHere) ptrs.push(`HEAD -> ${state.head.type === 'branch' ? state.head.target : 'detached'}`);
-                ptrs.push(...branchPtrs.filter(b => b !== (state.head.type === 'branch' ? state.head.target : null)));
-                ptrs.push(...remotePtrs);
-
-                const ptrStr = ptrs.length > 0 ? ` (${ptrs.join(', ')})` : '';
-                appendLog(`* ${c.shortHash}${ptrStr} ${c.message}`, 'cmd-success');
+                let ptrStr = '';
+                if (isHeadHere || branchPtrs.length > 0) {
+                    const ptrs = [];
+                    if (isHeadHere) ptrs.push(`HEAD -> ${state.head.type === 'branch' ? state.head.target : 'detached'}`);
+                    ptrs.push(...branchPtrs.filter(b => b !== (state.head.type === 'branch' ? state.head.target : null)));
+                    ptrStr = ` (${ptrs.join(', ')})`;
+                }
+                appendLog(`commit ${c.shortHash}${ptrStr}`, 'cmd-success');
+                appendLog(`    ${c.message}`, 'cmd-info');
             });
             return;
         }
@@ -490,15 +372,15 @@ document.addEventListener('DOMContentLoaded', () => {
         // --- git reset ---
         if (subCmd === 'reset') {
             resetToDefaultRepoState();
-            appendLog(`Repository graph reset to default state.`, 'cmd-info');
+            appendLog(`Repository graph reset to default initial state.`, 'cmd-info');
             return;
         }
 
-        appendLog(`git: '${subCmd}' is not recognized in this simulator. Try 'help'.`, 'cmd-error');
+        appendLog(`git: '${subCmd}' is not a recognized git command in this simulator. Try 'help'.`, 'cmd-error');
     }
 
     // =========================================================================
-    // 4. SVG Commit Tree Graph Renderer
+    // 4. SVG Commit Graph Renderer Engine
     // =========================================================================
     
     const svgEdgesLayer = document.getElementById('edges-layer');
@@ -506,22 +388,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const svgBranchesLayer = document.getElementById('branches-layer');
     const inspectorContent = document.getElementById('inspector-content');
     const currentHeadDisplay = document.getElementById('current-head-display');
-    const stashCountDisplay = document.getElementById('stash-count-display');
 
     function renderAll() {
-        if (currentHeadDisplay) {
-            currentHeadDisplay.textContent = state.head.type === 'branch' ? state.head.target : state.head.target.substring(0, 7);
-        }
-        if (stashCountDisplay) {
-            stashCountDisplay.textContent = state.stashStack.length;
-        }
+        currentHeadDisplay.textContent = state.head.type === 'branch' ? state.head.target : state.head.target.substring(0, 7);
         renderGraph();
         renderInspector();
-        renderStatusMonitor();
     }
 
     function calculateGraphLayout() {
         const commits = Object.values(state.commits).sort((a, b) => a.id - b.id);
+        const lanes = {}; // branch/path -> lane index
+        let nextLane = 0;
+
+        // Assign positions X, Y
         const startX = 60;
         const spacingX = 90;
         const startY = 70;
@@ -530,19 +409,22 @@ document.addEventListener('DOMContentLoaded', () => {
         commits.forEach((commit, index) => {
             commit.x = startX + index * spacingX;
 
+            // Determine lane
             if (commit.parents.length === 0) {
                 commit.lane = 0;
             } else if (commit.parents.length === 1) {
                 const parent = state.commits[commit.parents[0]];
-                if (!parent) {
-                    commit.lane = 0;
+                // If parent has other children or branch diverted
+                const siblingCommits = commits.filter(c => c.parents.includes(parent.hash) && c.id < commit.id);
+                if (siblingCommits.length > 0) {
+                    commit.lane = parent.lane + siblingCommits.length;
                 } else {
-                    const siblingCommits = commits.filter(c => c.parents.includes(parent.hash) && c.id < commit.id);
-                    commit.lane = siblingCommits.length > 0 ? parent.lane + siblingCommits.length : parent.lane;
+                    commit.lane = parent.lane;
                 }
             } else {
+                // Merge commit
                 const parent0 = state.commits[commit.parents[0]];
-                commit.lane = parent0 ? parent0.lane : 0;
+                commit.lane = parent0.lane;
             }
 
             commit.y = startY + commit.lane * spacingY;
@@ -615,7 +497,9 @@ document.addEventListener('DOMContentLoaded', () => {
             svgNodesLayer.appendChild(group);
         });
 
-        // 3. Draw Branch Badges
+        // 3. Draw Branch Badges & HEAD
+        const headCommitHash = getHeadCommitHash();
+
         Object.keys(state.branches).forEach((branchName, idx) => {
             const commitHash = state.branches[branchName];
             const commit = state.commits[commitHash];
@@ -629,9 +513,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const badgeColor = isHeadBranch ? 'var(--accent-green)' : getBranchColor(branchName);
 
             const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-            rect.setAttribute('x', '-40');
+            rect.setAttribute('x', '-35');
             rect.setAttribute('y', '-10');
-            rect.setAttribute('width', '80');
+            rect.setAttribute('width', '70');
             rect.setAttribute('height', '20');
             rect.setAttribute('class', 'branch-tag');
             rect.setAttribute('fill', badgeColor);
@@ -666,7 +550,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function getLaneColor(lane) {
-        const colors = ['#10b981', '#38bdf8', '#a855f7', '#f59e0b', '#f43f5e', '#06b6d4'];
+        const colors = ['#10b981', '#3b82f6', '#8b5cf6', '#f59e0b', '#f43f5e', '#06b6d4'];
         return colors[lane % colors.length];
     }
 
@@ -679,8 +563,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderInspector() {
-        if (!inspectorContent) return;
-
         if (!state.activeCommitHash || !state.commits[state.activeCommitHash]) {
             inspectorContent.textContent = 'Click on any commit node in the graph to inspect details.';
             return;
@@ -688,108 +570,125 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const c = state.commits[state.activeCommitHash];
         const branches = Object.keys(state.branches).filter(b => state.branches[b] === c.hash);
-        const remotes = Object.keys(state.remotes).filter(r => state.remotes[r] === c.hash);
         const isHeadHere = getHeadCommitHash() === c.hash;
 
         inspectorContent.innerHTML = `
             <strong>Hash:</strong> <code>${c.shortHash}</code> | 
             <strong>Message:</strong> "${c.message}" | 
             <strong>Parents:</strong> ${c.parents.map(p => state.commits[p]?.shortHash || p.substring(0, 7)).join(', ') || 'None (root)'} | 
-            <strong>Pointers:</strong> ${isHeadHere ? '<span style="color:var(--accent-green)">[HEAD]</span> ' : ''}${branches.map(b => `<span style="color:var(--accent-cyan)">[${b}]</span>`).join(' ')} ${remotes.map(r => `<span style="color:var(--accent-amber)">[${r}]</span>`).join(' ')}
+            <strong>Pointers:</strong> ${isHeadHere ? '<span style="color:var(--accent-green)">[HEAD]</span> ' : ''}${branches.map(b => `<span style="color:var(--accent-cyan)">[${b}]</span>`).join(' ') || 'None'}
         `;
     }
 
-    // Quick Action Buttons
-    document.getElementById('btn-quick-commit')?.addEventListener('click', () => {
+    // Header Action Buttons
+    document.getElementById('btn-quick-commit').addEventListener('click', () => {
         executeGitCommand(`git commit -m "Quick commit #${state.commitCounter}"`);
     });
 
-    document.getElementById('btn-quick-branch')?.addEventListener('click', () => {
+    document.getElementById('btn-quick-branch').addEventListener('click', () => {
         const bName = `feature-${Math.floor(Math.random() * 90 + 10)}`;
         executeGitCommand(`git checkout -b ${bName}`);
     });
 
-    document.getElementById('btn-quick-stash')?.addEventListener('click', () => {
-        executeGitCommand(`git stash`);
-    });
-
-    document.getElementById('btn-reset-repo')?.addEventListener('click', () => {
+    document.getElementById('btn-reset-repo').addEventListener('click', () => {
         resetToDefaultRepoState();
         appendLog(`Demo repository reset!`, 'cmd-info');
     });
 
-    // Toolbar Action Dialogs
-    document.querySelectorAll('.toolbar-btn').forEach(btn => {
+    // =========================================================================
+    // 5. Workflows Tab & Preset Demos
+    // =========================================================================
+    
+    document.querySelectorAll('.load-workflow-btn').forEach(btn => {
         btn.addEventListener('click', () => {
-            const action = btn.getAttribute('data-action');
-            if (action === 'merge-dialog') {
-                const target = prompt('Enter branch to merge into current HEAD:', 'feature1');
-                if (target) executeGitCommand(`git merge ${target}`);
-            } else if (action === 'rebase-dialog') {
-                const target = prompt('Enter target branch to rebase onto:', 'main');
-                if (target) executeGitCommand(`git rebase ${target}`);
-            } else if (action === 'cherry-dialog') {
-                const hash = prompt('Enter commit hash to cherry-pick:', 'c418d2e');
-                if (hash) executeGitCommand(`git cherry-pick ${hash}`);
-            } else if (action === 'stash-pop') {
-                executeGitCommand(`git stash pop`);
-            } else if (action === 'push') {
-                executeGitCommand(`git push`);
-            } else if (action === 'fetch') {
-                executeGitCommand(`git fetch`);
-            }
+            const workflow = btn.getAttribute('data-workflow');
+            loadWorkflowDemo(workflow);
+
+            // Switch to Visualizer tab
+            document.getElementById('tab-btn-visualizer').click();
         });
     });
 
+    function loadWorkflowDemo(workflowType) {
+        state.commits = {};
+        state.branches = {};
+        state.commitCounter = 1;
+
+        if (workflowType === 'feature-branch') {
+            const c1 = createCommitObject("Initial commit", []);
+            const c2 = createCommitObject("Setup core structure", [c1.hash]);
+            state.branches['main'] = c2.hash;
+
+            state.head = { type: 'branch', target: 'feature/auth' };
+            const c3 = createCommitObject("Add login form UI", [c2.hash]);
+            const c4 = createCommitObject("Add authentication token logic", [c3.hash]);
+            state.branches['feature/auth'] = c4.hash;
+
+            appendLog(`Loaded 'Feature Branch Workflow' demo in simulator!`, 'cmd-success');
+        } else if (workflowType === 'github-flow') {
+            const c1 = createCommitObject("Initial commit", []);
+            const c2 = createCommitObject("Production v1.0", [c1.hash]);
+            state.branches['main'] = c2.hash;
+
+            const c3 = createCommitObject("Create search bar component", [c2.hash]);
+            const c4 = createCommitObject("Add search filters", [c3.hash]);
+            state.branches['add-search-bar'] = c4.hash;
+
+            const mergeCommit = createCommitObject("PR #12: Merge add-search-bar into main", [c2.hash, c4.hash]);
+            state.branches['main'] = mergeCommit.hash;
+            state.head = { type: 'branch', target: 'main' };
+
+            appendLog(`Loaded 'GitHub Flow' demo in simulator!`, 'cmd-success');
+        } else if (workflowType === 'gitflow') {
+            const c1 = createCommitObject("Initial commit", []);
+            const c2 = createCommitObject("Release 1.0", [c1.hash]);
+            state.branches['main'] = c2.hash;
+
+            const dev = createCommitObject("Start develop branch", [c2.hash]);
+            state.branches['develop'] = dev.hash;
+
+            const feat1 = createCommitObject("Work on dashboard UI", [dev.hash]);
+            state.branches['feature/dashboard'] = feat1.hash;
+
+            const hotfix = createCommitObject("Hotfix security patch", [c2.hash]);
+            state.branches['hotfix/security'] = hotfix.hash;
+
+            state.head = { type: 'branch', target: 'develop' };
+
+            appendLog(`Loaded 'Gitflow Workflow' demo in simulator!`, 'cmd-success');
+        }
+
+        renderAll();
+    }
+
     // =========================================================================
-    // 5. Developer Deck & Cheatsheet
+    // 6. Cheatsheet Data & Filtering
     // =========================================================================
     
-    const deckData = [
-        { cat: 'staging', cmd: 'git status', desc: 'Show modified files, staged changes, and current branch state.' },
-        { cat: 'staging', cmd: 'git diff --stat', desc: 'Summary of changed files with additions and deletions count.' },
-        { cat: 'staging', cmd: 'git add .', desc: 'Stage all modified and new files for the next commit.' },
-        { cat: 'staging', cmd: 'git commit -m "msg"', desc: 'Record staged changes as a new commit snapshot.' },
-        
-        { cat: 'branching', cmd: 'git branch -a', desc: 'List all local and remote tracking branches.' },
-        { cat: 'branching', cmd: 'git checkout -b <name>', desc: 'Create a new branch and immediately switch HEAD to it.' },
-        { cat: 'branching', cmd: 'git switch <name>', desc: 'Switch active working environment to an existing branch.' },
-        { cat: 'branching', cmd: 'git branch -d <name>', desc: 'Safely delete a branch that has already been merged.' },
-        
-        { cat: 'merging', cmd: 'git merge <branch>', desc: 'Combine history of target branch into your active branch (3-way merge).' },
-        { cat: 'merging', cmd: 'git rebase main', desc: 'Re-apply feature commits on top of updated main for a linear graph.' },
-        
-        { cat: 'stashing', cmd: 'git stash', desc: 'Save uncommitted local changes to a stack so you can switch branches.' },
-        { cat: 'stashing', cmd: 'git stash pop', desc: 'Restore and remove the most recently stashed changes.' },
-        { cat: 'stashing', cmd: 'git cherry-pick <hash>', desc: 'Copy a specific commit from another branch onto your active branch.' },
-        
-        { cat: 'remote', cmd: 'git fetch', desc: 'Download new branches and commits from remote without merging.' },
-        { cat: 'remote', cmd: 'git pull', desc: 'Fetch remote changes and immediately merge them into your active branch.' },
-        { cat: 'remote', cmd: 'git push origin <branch>', desc: 'Upload local commits to the remote tracking branch.' },
-        
-        { cat: 'undoing', cmd: 'git reset --hard HEAD~1', desc: 'Rewind active branch by 1 commit and discard changes.' },
-        { cat: 'undoing', cmd: 'git revert <hash>', desc: 'Create a new commit that safely reverses changes from a previous commit.' },
-        { cat: 'undoing', cmd: 'git commit --amend', desc: 'Modify the message or files of the most recent commit.' }
+    const cheatsheetData = [
+        { cat: 'Branching Basics', cmd: 'git branch', desc: 'List all local branches in the current repository. The active branch is marked with an asterisk.' },
+        { cat: 'Branching Basics', cmd: 'git branch <name>', desc: 'Create a new branch pointing to the current HEAD commit without switching to it.' },
+        { cat: 'Switching', cmd: 'git checkout -b <name>', desc: 'Create a new branch and immediately switch HEAD to it.' },
+        { cat: 'Switching', cmd: 'git switch -c <name>', desc: 'Modern syntax to create and switch to a new branch.' },
+        { cat: 'Switching', cmd: 'git switch <name>', desc: 'Switch your active working environment to an existing branch.' },
+        { cat: 'Merging', cmd: 'git merge <branch>', desc: 'Combine commits from the target branch into your current active branch.' },
+        { cat: 'Cleanup', cmd: 'git branch -d <name>', desc: 'Delete a branch safely (only if it has already been merged).' },
+        { cat: 'Inspection', cmd: 'git log --oneline --graph', desc: 'Display a compact ASCII graph of commit history and branch pointers.' },
+        { cat: 'Inspection', cmd: 'git status', desc: 'Show working tree status and active checked-out branch.' }
     ];
 
-    const deckContainer = document.getElementById('cheatsheet-cards-container');
-    const deckSearch = document.getElementById('deck-search');
-    const catTags = document.querySelectorAll('.cat-tag');
-    let activeCategory = 'all';
+    const cheatsheetContainer = document.getElementById('cheatsheet-cards-container');
+    const cheatsheetSearch = document.getElementById('cheatsheet-search');
 
-    function renderDeck() {
-        if (!deckContainer) return;
-        deckContainer.innerHTML = '';
+    function renderCheatsheet(filterText = '') {
+        if (!cheatsheetContainer) return;
+        cheatsheetContainer.innerHTML = '';
 
-        const searchText = deckSearch ? deckSearch.value.toLowerCase() : '';
-
-        const filtered = deckData.filter(item => {
-            const matchesCat = activeCategory === 'all' || item.cat === activeCategory;
-            const matchesSearch = item.cmd.toLowerCase().includes(searchText) ||
-                                  item.desc.toLowerCase().includes(searchText) ||
-                                  item.cat.toLowerCase().includes(searchText);
-            return matchesCat && matchesSearch;
-        });
+        const filtered = cheatsheetData.filter(item => 
+            item.cmd.toLowerCase().includes(filterText.toLowerCase()) ||
+            item.desc.toLowerCase().includes(filterText.toLowerCase()) ||
+            item.cat.toLowerCase().includes(filterText.toLowerCase())
+        );
 
         filtered.forEach(item => {
             const card = document.createElement('div');
@@ -797,7 +696,7 @@ document.addEventListener('DOMContentLoaded', () => {
             card.innerHTML = `
                 <div class="cmd-card-header">
                     <span class="cmd-category">${item.cat}</span>
-                    <button class="cmd-run-btn" title="Run command in terminal">▶ Run</button>
+                    <button class="cmd-copy-btn" title="Run in simulator">▶ Run</button>
                 </div>
                 <div class="cmd-code-block">
                     <code>${item.cmd}</code>
@@ -805,141 +704,51 @@ document.addEventListener('DOMContentLoaded', () => {
                 <p>${item.desc}</p>
             `;
 
-            card.querySelector('.cmd-run-btn').addEventListener('click', () => {
+            card.querySelector('.cmd-copy-btn').addEventListener('click', () => {
                 document.getElementById('tab-btn-visualizer').click();
-                terminalInput.value = item.cmd.replace('<name>', 'feature/demo').replace('<branch>', 'feature1').replace('<hash>', 'c418d2e');
+                terminalInput.value = item.cmd.replace('<name>', 'feature/demo').replace('<branch>', 'feature/demo');
                 terminalInput.focus();
             });
 
-            deckContainer.appendChild(card);
+            cheatsheetContainer.appendChild(card);
         });
     }
 
-    if (deckSearch) {
-        deckSearch.addEventListener('input', renderDeck);
-    }
-
-    catTags.forEach(tag => {
-        tag.addEventListener('click', () => {
-            catTags.forEach(t => t.classList.remove('active'));
-            tag.classList.add('active');
-            activeCategory = tag.getAttribute('data-cat');
-            renderDeck();
-        });
-    });
-
-    renderDeck();
-
-    // =========================================================================
-    // 6. Interactive Guided Teacher Lessons
-    // =========================================================================
-    
-    document.querySelectorAll('.run-lesson-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const lessonNum = btn.getAttribute('data-lesson');
-            runTeacherLesson(lessonNum);
-            document.getElementById('tab-btn-visualizer').click();
-        });
-    });
-
-    function runTeacherLesson(lessonNum) {
-        resetToDefaultRepoState();
-
-        if (lessonNum === '1') {
-            appendLog(`🎓 LESSON 1: Feature Branch Cycle`, 'system-msg');
-            executeGitCommand(`git checkout -b feature/doctor-booking`);
-            executeGitCommand(`git commit -m "add slot picker UI"`);
-            executeGitCommand(`git switch main`);
-            executeGitCommand(`git merge feature/doctor-booking`);
-        } else if (lessonNum === '2') {
-            appendLog(`🎓 LESSON 2: 3-Way Merge & Conflict Concept`, 'system-msg');
-            executeGitCommand(`git checkout -b feature/patient-portal`);
-            executeGitCommand(`git commit -m "add patient dashboard"`);
-            executeGitCommand(`git switch main`);
-            executeGitCommand(`git commit -m "main branch doctor updates"`);
-            executeGitCommand(`git merge feature/patient-portal`);
-        } else if (lessonNum === '3') {
-            appendLog(`🎓 LESSON 3: Git Rebase for Linear History`, 'system-msg');
-            executeGitCommand(`git checkout feature2`);
-            executeGitCommand(`git rebase main`);
-        } else if (lessonNum === '4') {
-            appendLog(`🎓 LESSON 4: Git Stash Work-in-Progress`, 'system-msg');
-            executeGitCommand(`git checkout feature1`);
-            executeGitCommand(`git stash`);
-            executeGitCommand(`git switch main`);
-        } else if (lessonNum === '5') {
-            appendLog(`🎓 LESSON 5: Git Cherry-Pick Specific Commit`, 'system-msg');
-            executeGitCommand(`git cherry-pick c418d2e`);
-        } else if (lessonNum === '6') {
-            appendLog(`🎓 LESSON 6: Undoing Commits with Reset`, 'system-msg');
-            executeGitCommand(`git commit -m "Accidental commit"`);
-            executeGitCommand(`git reset`);
-        }
-    }
-
-    // =========================================================================
-    // 7. Live Branch Status Telemetry Monitor
-    // =========================================================================
-    
-    function renderStatusMonitor() {
-        const tbody = document.getElementById('monitor-table-body');
-        const activeEl = document.getElementById('mon-active-branch');
-        const totalEl = document.getElementById('mon-total-branches');
-        if (!tbody) return;
-
-        const activeBranch = state.head.type === 'branch' ? state.head.target : 'HEAD (detached)';
-        if (activeEl) activeEl.textContent = activeBranch;
-
-        const branchNames = Object.keys(state.branches);
-        if (totalEl) totalEl.textContent = branchNames.length;
-
-        tbody.innerHTML = '';
-
-        branchNames.forEach(bName => {
-            const commitHash = state.branches[bName];
-            const commit = state.commits[commitHash];
-            const isHead = state.head.type === 'branch' && state.head.target === bName;
-            const remoteHash = state.remotes[`origin/${bName}`];
-            const isRemoteSynced = remoteHash && remoteHash === commitHash;
-
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td><strong style="color: ${isHead ? 'var(--accent-green)' : 'var(--accent-blue)'}">${bName}</strong></td>
-                <td><code>${commit?.shortHash || 'N/A'}</code> - ${commit?.message || ''}</td>
-                <td>${isHead ? '<span class="difficulty-badge easy">Active HEAD</span>' : '<span style="color:var(--text-muted)">Inactive</span>'}</td>
-                <td>${bName === 'main' ? 'Base' : 'Merged / Active'}</td>
-                <td>${isRemoteSynced ? 'Synced (origin/' + bName + ')' : '<span style="color:var(--accent-amber)">Ahead of remote</span>'}</td>
-                <td>
-                    ${!isHead ? `<button class="btn btn-secondary btn-sm switch-mon-btn" data-b="${bName}">Switch</button>` : ''}
-                </td>
-            `;
-
-            tr.querySelector('.switch-mon-btn')?.addEventListener('click', () => {
-                executeGitCommand(`git switch ${bName}`);
-                document.getElementById('tab-btn-visualizer').click();
-            });
-
-            tbody.appendChild(tr);
+    if (cheatsheetSearch) {
+        cheatsheetSearch.addEventListener('input', (e) => {
+            renderCheatsheet(e.target.value);
         });
     }
 
+    renderCheatsheet();
+
     // =========================================================================
-    // 8. Challenge Validator
+    // 7. Interactive Challenges Tracker
     // =========================================================================
     
     function checkChallenges(actionType, payload) {
-        if (actionType === 'checkout-b') {
-            if (payload.branch === 'feature/login') completeChallenge(1);
+        if (actionType === 'checkout-b' || actionType === 'create-branch') {
+            if (payload.branch === 'feature/login') {
+                completeChallenge(1);
+            }
         }
+
         if (actionType === 'commit') {
-            if (state.completedChallenges.has(1)) completeChallenge(2);
+            if (state.completedChallenges.has(1)) {
+                completeChallenge(2);
+            }
         }
-        if (actionType === 'stash') completeChallenge(3);
+
         if (actionType === 'merge') {
-            if (payload.source === 'feature/login' && payload.target === 'main') completeChallenge(4);
+            if (payload.source === 'feature/login' && payload.target === 'main') {
+                completeChallenge(3);
+            }
         }
+
         if (actionType === 'delete-branch') {
-            if (payload.branch === 'feature/login' && state.completedChallenges.has(4)) completeChallenge(5);
+            if (payload.branch === 'feature/login' && state.completedChallenges.has(3)) {
+                completeChallenge(4);
+            }
         }
     }
 
@@ -953,10 +762,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const cardEl = document.getElementById(`challenge-card-${id}`);
         if (cardEl) cardEl.style.borderColor = 'var(--accent-green)';
 
-        const countEl = document.getElementById('completed-count');
-        if (countEl) countEl.textContent = `${state.completedChallenges.size}/5`;
-
-        appendLog(`🎉 Challenge ${id} Completed! Outstanding job!`, 'cmd-success');
+        document.getElementById('completed-count').textContent = `${state.completedChallenges.size}/4`;
+        appendLog(`🎉 Challenge ${id} Completed! Great job!`, 'cmd-success');
     }
 
     document.querySelectorAll('.btn-start-challenge').forEach(btn => {
@@ -964,16 +771,24 @@ document.addEventListener('DOMContentLoaded', () => {
             const chId = btn.getAttribute('data-challenge');
             document.getElementById('tab-btn-visualizer').click();
 
-            if (chId === '1') terminalInput.value = 'git checkout -b feature/login';
-            else if (chId === '2') terminalInput.value = 'git commit -m "Add auth component"';
-            else if (chId === '3') terminalInput.value = 'git stash';
-            else if (chId === '4') terminalInput.value = 'git checkout main';
-            else if (chId === '5') terminalInput.value = 'git branch -d feature/login';
+            if (chId === '1') {
+                appendLog(`Challenge 1 Goal: Create and switch to a branch named 'feature/login'. Type: git checkout -b feature/login`, 'system-msg');
+                terminalInput.value = 'git checkout -b feature/login';
+            } else if (chId === '2') {
+                appendLog(`Challenge 2 Goal: Make a commit on your feature branch. Type: git commit -m "Add login UI"`, 'system-msg');
+                terminalInput.value = 'git commit -m "Add login UI"';
+            } else if (chId === '3') {
+                appendLog(`Challenge 3 Goal: Switch to main and merge feature/login. Type: git checkout main`, 'system-msg');
+                terminalInput.value = 'git checkout main';
+            } else if (chId === '4') {
+                appendLog(`Challenge 4 Goal: Delete feature/login branch. Type: git branch -d feature/login`, 'system-msg');
+                terminalInput.value = 'git branch -d feature/login';
+            }
 
             terminalInput.focus();
         });
     });
 
-    // Initialize Engine State
+    // Initialize Default State
     resetToDefaultRepoState();
 });
