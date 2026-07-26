@@ -102,6 +102,16 @@ git diff main..feature1
 git branch --merged
 ```
 
+| Command                               | What it shows                                      |
+| ------------------------------------- | -------------------------------------------------- |
+| `git status`                          | Modified, staged, and untracked files              |
+| `git diff --name-only`                | Names of modified files (not staged)               |
+| `git diff --cached --name-only`       | Names of staged files                              |
+| `git show --name-only HEAD`           | Files changed in the latest commit                 |
+| `git diff main..feature1 --name-only` | Files different between `main` and `feature1`      |
+| `git diff --stat main..feature1`      | Summary of changed files with insertions/deletions |
+| `git log --stat`                      | Files changed in each commit                       |
+
 ---
 
 ## 📝 6. Learning Log History
