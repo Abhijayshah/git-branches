@@ -4,6 +4,7 @@
   "description": "Real-time Git Branch Dashboard with WebSocket live updates",
   "main": "server.js",
   "scripts": {
+    "build": "echo 'Static site ready'",
     "start": "node server.js",
     "dev": "node server.js"
   },

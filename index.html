@@ -405,11 +405,15 @@
         const branchText = document.getElementById('launcher-branch-text');
         const wsDot = document.getElementById('launcher-ws-dot');
         const liveDot = document.getElementById('launcher-live-dot');
+        let ws = null;
+        let timer = null;
 
         function tryConnect() {
+            if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) return;
             try {
-                const ws = new WebSocket('ws://localhost:3001');
+                ws = new WebSocket('ws://localhost:3001');
                 ws.addEventListener('open', () => {
+                    if (timer) { clearTimeout(timer); timer = null; }
                     liveDot.style.background = '#22c55e';
                     liveDot.style.boxShadow = '0 0 6px #22c55e';
                     wsDot.style.background = '#22c55e';
@@ -426,7 +430,9 @@
                     liveDot.style.background = '#8b92a5';
                     liveDot.style.boxShadow = '';
                     wsDot.style.background = '#8b92a5';
-                    setTimeout(tryConnect, 4000);
+                    if (!timer) {
+                        timer = setTimeout(() => { timer = null; tryConnect(); }, 5000);
+                    }
                 });
             } catch {}
         }

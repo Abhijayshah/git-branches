@@ -79,21 +79,25 @@ async function api(endpoint, options = {}) {
 }
 
 // ── WebSocket Connection ──────────────────────────────────────────────────────
+let reconnectTimer = null;
+
 function connectWebSocket() {
+    if (state.ws && (state.ws.readyState === WebSocket.OPEN || state.ws.readyState === WebSocket.CONNECTING)) {
+        return;
+    }
     try {
         state.ws = new WebSocket(WS_URL);
 
         state.ws.addEventListener('open', () => {
             state.wsConnected = true;
+            if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null; }
             updateWsStatus(true);
-            toast('Real-time tracking connected', 'success', 2000);
         });
 
         state.ws.addEventListener('message', (event) => {
             try {
                 const msg = JSON.parse(event.data);
                 if (msg.event === 'branch-update') {
-                    // Live branch update received from chokidar watcher
                     onLiveBranchUpdate(msg.data, msg.timestamp);
                 }
             } catch (e) {}
@@ -102,8 +106,12 @@ function connectWebSocket() {
         state.ws.addEventListener('close', () => {
             state.wsConnected = false;
             updateWsStatus(false);
-            // Auto-reconnect after 3 seconds
-            setTimeout(connectWebSocket, 3000);
+            if (!reconnectTimer) {
+                reconnectTimer = setTimeout(() => {
+                    reconnectTimer = null;
+                    connectWebSocket();
+                }, 3000);
+            }
         });
 
         state.ws.addEventListener('error', () => {
@@ -136,26 +144,34 @@ function updateWsStatus(connected) {
 }
 
 function onLiveBranchUpdate(data, timestamp) {
+    const sig = (data.currentBranch || '') + '|' +
+                (data.branches || []).map(b => b.name + ':' + b.shortHash + ':' + b.ahead + ':' + b.behind).join(',') + '|' +
+                JSON.stringify(data.status);
+
+    if (state.lastSignature === sig) {
+        return; // Data has not changed, skip re-rendering to prevent screen flickering
+    }
+    state.lastSignature = sig;
+
     state.branches = data.branches || [];
     state.currentBranch = data.currentBranch || '';
     state.status = data.status || state.status;
 
     renderAll();
-    flashUpdateIndicator();
+    loadCommitLog(true);
 
     const t = new Date(timestamp);
     document.getElementById('stat-last-updated').textContent =
         t.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-
-    toast(`Branch tree updated`, 'info', 2000);
 }
 
 function flashUpdateIndicator() {
-    const cards = document.querySelectorAll('.branch-card');
-    cards.forEach(c => {
-        c.classList.add('flash-update');
-        setTimeout(() => c.classList.remove('flash-update'), 800);
-    });
+    // Subtle indicator update without whole-screen flashing
+    const pulse = document.getElementById('topbar-ws-pulse');
+    if (pulse) {
+        pulse.style.transform = 'scale(1.8)';
+        setTimeout(() => pulse.style.transform = 'scale(1)', 400);
+    }
 }
 
 // ── Initial Data Load ─────────────────────────────────────────────────────────
@@ -360,13 +376,15 @@ function updateSidebarRepoInfo() {
 }
 
 // ── Commit Log ────────────────────────────────────────────────────────────────
-async function loadCommitLog() {
+async function loadCommitLog(silent = false) {
     const container = document.getElementById('commit-log-container');
-    container.innerHTML = '<div style="padding:20px;color:var(--text-muted);font-size:12px">Loading commits...</div>';
+    if (!silent && (!container.children.length || container.querySelector('.empty-state'))) {
+        container.innerHTML = '<div style="padding:20px;color:var(--text-muted);font-size:12px">Loading commits...</div>';
+    }
 
     const result = await api('/log');
     if (!result.ok || !result.data) {
-        container.innerHTML = '<div class="empty-state">Could not load commit log</div>';
+        if (!silent) container.innerHTML = '<div class="empty-state">Could not load commit log</div>';
         return;
     }
 
@@ -375,6 +393,12 @@ async function loadCommitLog() {
         container.innerHTML = '<div class="empty-state">No commits found</div>';
         return;
     }
+
+    const logSig = entries.map(e => e.hash + ':' + e.refs).join('|');
+    if (state.lastLogSig === logSig) {
+        return; // Commit log hasn't changed, skip DOM refresh
+    }
+    state.lastLogSig = logSig;
 
     // Color mapping for branch lanes
     const branchColors = {};

@@ -65,6 +65,24 @@ const refsPath = path.join(REPO_PATH, '.git', 'refs', 'heads');
 const packedRefsPath = path.join(REPO_PATH, '.git', 'packed-refs');
 const headPath = path.join(REPO_PATH, '.git', 'HEAD');
 
+let updateTimeout = null;
+let isUpdating = false;
+
+function scheduleBranchUpdate(reason) {
+    if (updateTimeout) clearTimeout(updateTimeout);
+    updateTimeout = setTimeout(async () => {
+        if (isUpdating) return;
+        isUpdating = true;
+        try {
+            await broadcastBranchUpdate(reason);
+        } catch (e) {
+            console.error('Update schedule error:', e.message);
+        } finally {
+            isUpdating = false;
+        }
+    }, 300);
+}
+
 async function broadcastBranchUpdate(reason) {
     try {
         const data = await getBranchData();
@@ -80,11 +98,12 @@ if (fs.existsSync(refsPath)) {
     chokidar.watch([refsPath, packedRefsPath, headPath], {
         persistent: true,
         ignoreInitial: true,
-        awaitWriteFinish: { stabilityThreshold: 100, pollInterval: 50 }
+        ignored: [/\.lock$/, /~$/, /\.tmp$/],
+        awaitWriteFinish: { stabilityThreshold: 300, pollInterval: 100 }
     })
-    .on('add', () => broadcastBranchUpdate('New branch detected'))
-    .on('unlink', () => broadcastBranchUpdate('Branch deleted'))
-    .on('change', () => broadcastBranchUpdate('Branch pointer changed (new commit or HEAD switch)'));
+    .on('add', () => scheduleBranchUpdate('New branch detected'))
+    .on('unlink', () => scheduleBranchUpdate('Branch deleted'))
+    .on('change', () => scheduleBranchUpdate('Branch pointer changed'));
 
     console.log('👁  Watching .git/refs/heads/ for real-time branch changes...\n');
 } else {
@@ -93,95 +112,78 @@ if (fs.existsSync(refsPath)) {
 
 // ─── Helper: Build Branch Data ────────────────────────────────────────────────
 async function getBranchData() {
-    const [branchSummary, logRaw, statusSummary] = await Promise.all([
-        git.branch(['-a', '-v', '--format=%(refname:short)|%(objectname:short)|%(objectname)|%(upstream:short)|%(upstream:track)']),
-        git.log(['--oneline', '--graph', '--all', '--max-count=80']),
-        git.status()
+    const [rawBranchOutput, logRaw, statusSummary] = await Promise.all([
+        git.raw(['branch', '-a', '-v', '--format=%(refname:short)|%(objectname:short)|%(objectname)|%(authorname)|%(committerdate:iso-strict)|%(subject)|%(upstream:track)']),
+        git.log(['--oneline', '--graph', '--all', '--max-count=80']).catch(() => ({ all: [] })),
+        git.status().catch(() => ({ current: '', modified: [], staged: [], not_added: [], deleted: [], isClean: () => true }))
     ]);
 
-    // Parse each local branch with full commit details
-    const branchLines = branchSummary.all || [];
+    const lines = (rawBranchOutput || '').trim().split('\n').filter(Boolean);
     const branches = [];
+    const remoteBranches = [];
 
-    for (const branchName of branchLines) {
-        if (branchName.startsWith('origin/') && branchName !== 'origin/HEAD') {
-            // Include remotes but mark them
-            try {
-                const isCurrentBranch = statusSummary.current === branchName.replace('origin/', '');
-                branches.push({
-                    name: branchName,
-                    type: 'remote',
-                    isCurrent: false,
-                    shortHash: '',
-                    message: '',
-                    author: '',
-                    date: '',
-                    remoteName: branchName
-                });
-            } catch {}
-            continue;
-        }
+    for (const line of lines) {
+        const parts = line.split('|');
+        const name = (parts[0] || '').trim();
+        const shortHash = (parts[1] || '').trim();
+        const fullHash = (parts[2] || '').trim();
+        const author = (parts[3] || '').trim();
+        const date = (parts[4] || '').trim();
+        const message = (parts[5] || '').trim();
+        const track = (parts[6] || '').trim();
 
-        // Local branch — get full commit details
-        try {
-            const log = await git.log({ maxCount: 1, from: branchName });
-            const latest = log.latest;
-            const isCurrent = statusSummary.current === branchName;
+        if (!name || name === 'origin' || name === 'origin/HEAD') continue;
 
-            // Get ahead/behind info vs origin
-            let ahead = 0;
-            let behind = 0;
-            try {
-                const revList = await git.raw(['rev-list', '--left-right', '--count', `origin/${branchName}...${branchName}`]);
-                const parts = revList.trim().split(/\s+/);
-                behind = parseInt(parts[0]) || 0;
-                ahead = parseInt(parts[1]) || 0;
-            } catch {}
+        let ahead = 0;
+        let behind = 0;
+        const aheadMatch = track.match(/ahead (\d+)/);
+        const behindMatch = track.match(/behind (\d+)/);
+        if (aheadMatch) ahead = parseInt(aheadMatch[1], 10) || 0;
+        if (behindMatch) behind = parseInt(behindMatch[1], 10) || 0;
 
+        const isCurrent = statusSummary.current === name;
+
+        if (name.startsWith('origin/') || name === 'origin') {
+            remoteBranches.push({
+                name,
+                type: 'remote',
+                isCurrent: false,
+                shortHash,
+                fullHash,
+                message,
+                author,
+                date
+            });
+        } else {
             branches.push({
-                name: branchName,
+                name,
                 type: 'local',
                 isCurrent,
-                shortHash: latest ? latest.hash.substring(0, 7) : '',
-                fullHash: latest ? latest.hash : '',
-                message: latest ? latest.message : '',
-                author: latest ? latest.author_name : '',
-                date: latest ? latest.date : '',
+                shortHash,
+                fullHash,
+                message: message || 'No commits yet',
+                author,
+                date,
                 ahead,
-                behind,
-                hasRemote: ahead !== undefined
-            });
-        } catch (e) {
-            // Branch has no commits yet or other issue
-            branches.push({
-                name: branchName,
-                type: 'local',
-                isCurrent: statusSummary.current === branchName,
-                shortHash: '',
-                fullHash: '',
-                message: 'No commits yet',
-                author: '',
-                date: '',
-                ahead: 0,
-                behind: 0
+                behind
             });
         }
     }
 
     return {
-        branches: branches.filter(b => !b.name.startsWith('origin/')),
-        remoteBranches: branches.filter(b => b.name.startsWith('origin/')),
+        branches,
+        remoteBranches,
         currentBranch: statusSummary.current,
         status: {
             modified: statusSummary.modified.length,
             staged: statusSummary.staged.length,
             untracked: statusSummary.not_added.length,
             deleted: statusSummary.deleted.length,
-            isClean: statusSummary.isClean()
+            isClean: typeof statusSummary.isClean === 'function' ? statusSummary.isClean() : true
         },
         graphRaw: logRaw.all ? logRaw.all.map(l => ({
             hash: l.hash,
-            shortHash: l.hash.substring(0, 7),
+            shortHash: l.hash ? l.hash.substring(0, 7) : '',
             message: l.message,
             author: l.author_name,
             date: l.date,
