@@ -396,12 +396,11 @@ body {
   pointer-events: none;
 }
 
+/* NOTE: rx and ry are SVG element attributes — set them directly on the <rect> element in JS/HTML, not here in CSS */
 .branch-tag {
   font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 600;
-  rx: 4px;
-  ry: 4px;
   cursor: pointer;
 }
 
@@ -694,6 +693,7 @@ body {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
   gap: 1.25rem;
+  margin-top: 1.5rem;
 }
 
 .cmd-card {
@@ -701,7 +701,6 @@ body {
   display: flex;
   flex-direction: column;
   gap: 0.6rem;
-
 }
 
 .cmd-card-header {
