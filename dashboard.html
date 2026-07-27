@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Git Branch Dashboard — Real-Time Developer Panel</title>
+    <meta name="description" content="Real-time Git branch monitoring, switching, merging, and commit tree visualization dashboard for developers.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-logo">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="6" y1="3" x2="6" y2="15"></line>
+                    <circle cx="18" cy="6" r="3"></circle>
+                    <circle cx="6" cy="18" r="3"></circle>
+                    <path d="M18 9a9 9 0 0 1-9 9"></path>
+                </svg>
+                <span>Git Dashboard</span>
+            </div>
+            <button class="sidebar-toggle" id="sidebar-collapse-btn" title="Collapse sidebar">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+            </button>
+        </div>
+
+        <!-- Connection Status -->
+        <div class="ws-status-bar" id="ws-status-bar">
+            <span class="ws-dot" id="ws-dot"></span>
+            <span id="ws-status-text">Connecting...</span>
+        </div>
+
+        <!-- Repository Info -->
+        <div class="sidebar-repo-info" id="sidebar-repo-info">
+            <div class="repo-info-label">Repository</div>
+            <div class="repo-name" id="sidebar-repo-name">Loading...</div>
+            <div class="repo-branch-pill" id="sidebar-head-branch">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="6" y1="3" x2="6" y2="15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/></svg>
+                <span id="sidebar-current-branch">main</span>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="sidebar-section-label">Quick Actions</div>
+        <div class="sidebar-actions">
+            <button class="sidebar-action-btn" id="btn-fetch-all" title="Fetch all remotes">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                Fetch All
+            </button>
+            <button class="sidebar-action-btn" id="btn-new-branch" title="Create new branch">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                New Branch
+            </button>
+            <button class="sidebar-action-btn" id="btn-refresh" title="Refresh repository state">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                Refresh
+            </button>
+        </div>
+
+        <!-- Working Tree Status -->
+        <div class="sidebar-section-label">Working Tree</div>
+        <div class="working-tree-status" id="working-tree-status">
+            <div class="status-row" id="status-row-modified"><span class="status-icon modified">M</span><span class="status-label">Modified</span><span class="status-count" id="count-modified">0</span></div>
+            <div class="status-row" id="status-row-staged"><span class="status-icon staged">S</span><span class="status-label">Staged</span><span class="status-count" id="count-staged">0</span></div>
+            <div class="status-row" id="status-row-untracked"><span class="status-icon untracked">?</span><span class="status-label">Untracked</span><span class="status-count" id="count-untracked">0</span></div>
+        </div>
+
+        <!-- Branch List -->
+        <div class="sidebar-section-label">
+            Branches
+            <span class="branch-count-badge" id="branch-count-badge">0</span>
+        </div>
+        <div class="branch-search-wrapper">
+            <input type="text" id="branch-search-input" class="branch-search" placeholder="Search branches...">
+        </div>
+        <div class="branch-list" id="sidebar-branch-list">
+            <!-- Dynamically rendered -->
+        </div>
+
+        <!-- Back Link -->
+        <div class="sidebar-footer">
+            <a href="index.html" class="back-link">← Back to Playground</a>
+        </div>
+    </aside>
+
+    <!-- Main Panel -->
+    <main class="dashboard-main" id="dashboard-main">
+
+        <!-- Top Bar -->
+        <header class="dashboard-topbar">
+            <div class="topbar-left">
+                <button class="topbar-toggle-btn" id="topbar-sidebar-toggle" title="Toggle sidebar">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+                </button>
+                <h1 class="topbar-title">Real-Time Git Dashboard</h1>
+                <div class="topbar-breadcrumb" id="topbar-branch-display">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="6" y1="3" x2="6" y2="15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/></svg>
+                    <span id="topbar-current-branch">main</span>
+                </div>
+            </div>
+            <div class="topbar-right">
+                <div class="topbar-ws-indicator" id="topbar-ws-indicator" title="WebSocket connection status">
+                    <span class="ws-pulse" id="topbar-ws-pulse"></span>
+                    <span id="topbar-ws-label">Live</span>
+                </div>
+                <button class="btn-topbar" id="btn-push" title="Push current branch to origin">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/></svg>
+                    Push
+                </button>
+                <button class="btn-topbar btn-topbar-merge" id="btn-merge-dialog">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M6 21V9a9 9 0 0 0 9 9"/></svg>
+                    Merge
+                </button>
+            </div>
+        </header>
+
+        <!-- Stats Strip -->
+        <div class="stats-strip" id="stats-strip">
+            <div class="stat-card">
+                <div class="stat-label">Local Branches</div>
+                <div class="stat-value" id="stat-local-count">–</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Current Branch</div>
+                <div class="stat-value mono" id="stat-current-branch">–</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Working Tree</div>
+                <div class="stat-value" id="stat-tree-status">–</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Last Updated</div>
+                <div class="stat-value mono" id="stat-last-updated">–</div>
+            </div>
+        </div>
+
+        <!-- Main Content Grid -->
+        <div class="content-grid">
+
+            <!-- Left: Branch Cards Grid -->
+            <section class="panel panel-branches">
+                <div class="panel-header">
+                    <h2>Branch Explorer</h2>
+                    <div class="panel-header-actions">
+                        <button class="btn-panel" id="btn-sort-branches">Sort by date</button>
+                    </div>
+                </div>
+                <div class="branch-cards-grid" id="branch-cards-grid">
+                    <!-- Dynamically rendered -->
+                </div>
+            </section>
+
+            <!-- Right: Commit Log Panel -->
+            <section class="panel panel-commits">
+                <div class="panel-header">
+                    <h2>Commit Log</h2>
+                    <div class="panel-header-actions">
+                        <span class="panel-branch-label" id="commit-log-branch-label">all branches</span>
+                    </div>
+                </div>
+                <div class="commit-log-container" id="commit-log-container">
+                    <!-- Dynamically rendered -->
+                </div>
+            </section>
+        </div>
+
+        <!-- Bottom: Commit Inspector Drawer -->
+        <div class="inspector-drawer" id="inspector-drawer">
+            <div class="inspector-handle" id="inspector-handle">
+                <div class="handle-grip"></div>
+                <span class="inspector-title">Commit Inspector</span>
+                <span class="inspector-close" id="inspector-close">✕</span>
+            </div>
+            <div class="inspector-body" id="inspector-body">
+                <div class="inspector-placeholder">
+                    Click any commit node to inspect SHA, author, date, message, and branch pointers.
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Create Branch Dialog -->
+    <div class="modal-overlay hidden" id="modal-create-branch">
+        <div class="modal glass-card">
+            <div class="modal-header">
+                <h3>Create New Branch</h3>
+                <button class="modal-close" data-modal="modal-create-branch">✕</button>
+            </div>
+            <div class="modal-body">
+                <label class="form-label">Branch Name</label>
+                <input type="text" id="input-new-branch-name" class="form-input" placeholder="feature/my-feature" />
+                <label class="form-label" style="margin-top:1rem">Branch From</label>
+                <select id="select-branch-from" class="form-input">
+                    <!-- Options populated dynamically -->
+                </select>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-modal-cancel" data-modal="modal-create-branch">Cancel</button>
+                <button class="btn-modal-confirm" id="btn-confirm-create-branch">Create Branch</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Merge Dialog -->
+    <div class="modal-overlay hidden" id="modal-merge">
+        <div class="modal glass-card">
+            <div class="modal-header">
+                <h3>Merge Branch</h3>
+                <button class="modal-close" data-modal="modal-merge">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="merge-diagram" id="merge-diagram">
+                    <div class="merge-source">
+                        <div class="merge-label">Source Branch</div>
+                        <select id="select-merge-source" class="form-input"></select>
+                    </div>
+                    <div class="merge-arrow">→</div>
+                    <div class="merge-target">
+                        <div class="merge-label">Merge Into (Target)</div>
+                        <div class="merge-target-display" id="merge-target-display">main</div>
+                    </div>
+                </div>
+                <div class="merge-warning">
+                    ⚠️ This will merge the source branch into your current active branch. Make sure there are no unsaved changes.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-modal-cancel" data-modal="modal-merge">Cancel</button>
+                <button class="btn-modal-confirm btn-danger-confirm" id="btn-confirm-merge">Merge Branch</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Dialog -->
+    <div class="modal-overlay hidden" id="modal-delete">
+        <div class="modal glass-card">
+            <div class="modal-header">
+                <h3>Delete Branch</h3>
+                <button class="modal-close" data-modal="modal-delete">✕</button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete branch <strong id="delete-branch-name-display"></strong>?</p>
+                <label class="checkbox-label" style="margin-top:1rem">
+                    <input type="checkbox" id="checkbox-force-delete">
+                    Force delete (<code>-D</code>) even if not fully merged
+                </label>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-modal-cancel" data-modal="modal-delete">Cancel</button>
+                <button class="btn-modal-confirm btn-danger-confirm" id="btn-confirm-delete">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <script src="dashboard.js"></script>
+</body>
+</html>
